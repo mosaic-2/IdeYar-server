@@ -56,6 +56,7 @@ func runGRPCServer() error {
 
 	grpcServer := grpc.NewServer()
 
+	// register grpc services here
 	livenessServer, err := livenessImpl.NewServer()
 	if err != nil {
 		return fmt.Errorf("failed to initialize liveness server: %w", err)
@@ -69,6 +70,7 @@ func runGRPCServer() error {
 func runHTTPServer(ctx context.Context) error {
 	mux := runtime.NewServeMux()
 
+	// register http services here
 	err := livenessService.RegisterLivenessHandlerFromEndpoint(
 		ctx,
 		mux,
