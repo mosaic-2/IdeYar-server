@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+
+package KhanAPI;
+option go_package = "./../pkg/LivenessService";
+
+service Liveness {
+  rpc CheckLiveness (google.protobuf.Empty) returns (CheckLivenessResponse) {
+    option (google.api.http) = {
+      get: "/v1/liveness/checkliveness"
+    };
+  }
+}
+
+message CheckLivenessResponse {
+  bool is_alive = 1;
+  string message = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
