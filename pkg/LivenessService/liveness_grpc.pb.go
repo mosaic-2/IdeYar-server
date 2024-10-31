@@ -32,7 +32,7 @@ func NewLivenessClient(cc grpc.ClientConnInterface) LivenessClient {
 
 func (c *livenessClient) CheckLiveness(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*CheckLivenessResponse, error) {
 	out := new(CheckLivenessResponse)
-	err := c.cc.Invoke(ctx, "/KhanAPI.Liveness/CheckLiveness", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/IdeYarAPI.Liveness/CheckLiveness", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func _Liveness_CheckLiveness_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/KhanAPI.Liveness/CheckLiveness",
+		FullMethod: "/IdeYarAPI.Liveness/CheckLiveness",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LivenessServer).CheckLiveness(ctx, req.(*emptypb.Empty))
@@ -89,7 +89,7 @@ func _Liveness_CheckLiveness_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Liveness_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "KhanAPI.Liveness",
+	ServiceName: "IdeYarAPI.Liveness",
 	HandlerType: (*LivenessServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
