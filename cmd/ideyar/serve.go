@@ -19,8 +19,8 @@ import (
 )
 
 var (
-	grpcPort = ":8888"
-	httpPort = ":80"
+	grpcPort = ":8080"
+	httpPort = ":8888"
 )
 
 func serve() error {
