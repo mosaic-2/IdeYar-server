@@ -12,10 +12,10 @@ type server struct {
 }
 
 func NewServer() (LivenessService.LivenessServer, error) {
-	return server{}, nil
+	return &server{}, nil
 }
 
-func (s server) CheckLiveness(ctx context.Context, _ *emptypb.Empty) (*LivenessService.CheckLivenessResponse, error) {
+func (s *server) CheckLiveness(ctx context.Context, _ *emptypb.Empty) (*LivenessService.CheckLivenessResponse, error) {
 	return &LivenessService.CheckLivenessResponse{
 		IsAlive:   true,
 		Message:   "IdeYar is alive",
