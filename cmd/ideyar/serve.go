@@ -23,7 +23,7 @@ var (
 	httpPort = ":80"
 )
 
-func main() {
+func serve() error {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -46,6 +46,7 @@ func main() {
 	<-signalCh
 	log.Println("Received stop signal, shutting down...")
 	cancel()
+	return nil
 }
 
 func runGRPCServer() error {
