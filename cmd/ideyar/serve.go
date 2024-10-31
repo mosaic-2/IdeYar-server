@@ -3,49 +3,87 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	livenessImp "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
-	"github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
+	livenessService "github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
 )
 
-var grpcPort = ":8888"
-var httpPort = ":80"
+var (
+	grpcPort = ":8888"
+	httpPort = ":80"
+)
 
-func serve() error {
+func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		if err := runGRPCServer(); err != nil {
+			log.Fatalf("Failed to run gRPC server: %v", err)
+		}
+	}()
+
+	go func() {
+		if err := runHTTPServer(ctx); err != nil {
+			log.Fatalf("Failed to run HTTP server: %v", err)
+		}
+	}()
+
+	<-signalCh
+	log.Println("Received stop signal, shutting down...")
+	cancel()
+}
+
+func runGRPCServer() error {
 	lis, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
+		return fmt.Errorf("failed to listen on %s: %w", grpcPort, err)
 	}
 
 	grpcServer := grpc.NewServer()
+
+	livenessServer, err := livenessImpl.NewServer()
+	if err != nil {
+		return fmt.Errorf("failed to initialize liveness server: %w", err)
+	}
+	livenessService.RegisterLivenessServer(grpcServer, livenessServer)
+
+	log.Printf("Starting gRPC server on %s", grpcPort)
+	return grpcServer.Serve(lis)
+}
+
+func runHTTPServer(ctx context.Context) error {
 	mux := runtime.NewServeMux()
 
-	livenessServer, err := livenessImp.NewServer()
+	err := livenessService.RegisterLivenessHandlerFromEndpoint(
+		ctx,
+		mux,
+		"localhost"+grpcPort,
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	)
 	if err != nil {
-		return fmt.Errorf("faild to init liveness server %v", err)
+		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	LivenessService.RegisterLivenessServer(grpcServer, livenessServer)
-	err = LivenessService.RegisterLivenessHandlerFromEndpoint(ctx, mux, grpcPort, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		return fmt.Errorf("faild to register http server %v", err)
+	httpServer := &http.Server{
+		Addr:    httpPort,
+		Handler: mux,
 	}
 
-	if err := grpcServer.Serve(lis); err != nil {
-		return fmt.Errorf("failed to serve: %v", err)
-	}
-	if err := http.ListenAndServe(httpPort, mux); err != nil {
-		return fmt.Errorf("failed to serve HTTP server: %v", err)
-	}
-
-	return nil
+	log.Printf("Starting HTTP server on %s", httpPort)
+	return httpServer.ListenAndServe()
 }
