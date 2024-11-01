@@ -19,4 +19,4 @@ RUN echo '#!/bin/sh\n' > /home/app/entrypoint.sh && \
 
 RUN chmod +x /home/app/entrypoint.sh
 
-ENTRYPOINT ["/home/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/home/app/entrypoint.sh"]
