@@ -46,6 +46,10 @@ jobs:
           username: mosaic-2
           password: ${{ secrets.PERSONAL_TOKEN }}
 
+      - name: Set up Docker build tag
+        id: vars
+        run: echo "BUILD_TAG=build-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Pull Docker image and retag for production
         run: |
           docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
