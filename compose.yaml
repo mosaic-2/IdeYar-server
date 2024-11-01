@@ -9,23 +9,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
-  init-db:
-    build:
-      context: .
-      dockerfile: Dockerfile.init-db
-    depends_on:
-      - postgres
-    environment:
-      - DB_USER=$DB_USER
-      - DB_PASS=$DB_PASS
-      - DB_HOST=postgres
-      - DB_PORT=$DB_PORT
-      - DB_NAME=$DB_NAME
-    restart: "no"
   ideyar:
     build: .
     depends_on:
-      - init-db
+      - postgres
     ports:
       - "8888:8888"
       - "8080:8080"
