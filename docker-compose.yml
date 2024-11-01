@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres:16.2-alpine3.19
+    environment:
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASS
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+  ideyar:
+    image: ghcr.io/mosaic-2/ideyar-server/ideyar:production
+    depends_on:
+      - postgres
+    ports:
+      - "8888:8888"
+      - "8080:8080"
+    environment:
+      - DB_USER=$DB_USER
+      - DB_PASS=$DB_PASS
+      - DB_HOST=postgres
+      - DB_PORT=$DB_PORT
+      - DB_NAME=$DB_NAME
+      - SECRET_KEY=$SECRET_KEY
+    restart: always
+volumes:
+  postgres_data:

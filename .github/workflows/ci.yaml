@@ -1,0 +1,65 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker build tag
+        id: vars
+        run: echo "BUILD_TAG=build-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: mosaic-2
+          password: ${{ secrets.PERSONAL_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: mosaic-2
+          password: ${{ secrets.PERSONAL_TOKEN }}
+
+      - name: Pull Docker image and retag for production
+        run: |
+          docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
+          docker tag ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }} ghcr.io/mosaic-2/ideyar-server/ideyar:production
+
+      - name: Log in to production server
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: ${{ secrets.PRODUCTION_SERVER }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            scp -o StrictHostKeyChecking=no ./docker-compose.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.PRODUCTION_SERVER }}:~/docker-compose.yml
+
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.PRODUCTION_SERVER }} "docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:production"
+
+            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.PRODUCTION_SERVER }} "docker-compose -f ~/docker-compose.yml up -d"
