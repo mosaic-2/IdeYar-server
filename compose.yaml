@@ -10,7 +10,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
   ideyar:
-    image: yourregistry/ideyar:latest  # Replace with your actual image name and tag
+    image: ghcr.io/mosaic-2/ideyar-server/ideyar:production
     depends_on:
       - postgres
     ports:
