@@ -55,6 +55,10 @@ jobs:
           docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
           docker tag ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }} ghcr.io/mosaic-2/ideyar-server/ideyar:production
 
+      - name: Push production image to GitHub Container Registry
+        run: |
+          docker push ghcr.io/mosaic-2/ideyar-server/ideyar:production
+
       - name: Log in to production server
         uses: appleboy/ssh-action@v0.1.4
         with:
