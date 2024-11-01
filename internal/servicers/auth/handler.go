@@ -136,3 +136,93 @@ func (s *Server) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginRespo
 	}, nil
 
 }
+
+func (s *Server) CodeVerification(ctx context.Context, in *pb.CodeVerificationRequest) (*pb.CodeVerificationResponse, error) {
+	token, err := jwt.Parse(in.SignUpToken, func(token *jwt.Token) (interface{}, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, status.Errorf(codes.Unauthenticated, "unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.hmacSecret, nil
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, err.Error())
+	}
+
+	aud, _ := token.Claims.GetAudience()
+	if len(aud) != 1 || aud[0] != "SignUp" {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid token")
+	}
+
+	signUpIDStr, _ := token.Claims.GetSubject()
+	signUpID, err := strconv.Atoi(signUpIDStr)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	signUpRow, err := s.query.GetSignUpData(ctx, int32(signUpID))
+	if err != nil {
+		return nil, err
+	}
+
+	if signUpRow.VerificationCode != in.Code {
+		return nil, status.Errorf(codes.InvalidArgument, "Wrong Code")
+	}
+
+	err = s.query.DeleteSignup(ctx, signUpRow.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	TX, err := s.conn.Begin()
+	defer func(TX *sql.Tx) {
+		_ = TX.Commit()
+	}(TX)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	TXQuery := s.query.WithTx(TX)
+
+	usernameCnt, err := TXQuery.ExistsUserUsername(ctx, signUpRow.Username)
+	if err != nil || usernameCnt != 0 {
+		_ = TX.Rollback()
+		return nil, err
+	}
+
+	emailCnt, err := TXQuery.ExistsUserEmail(ctx, signUpRow.Email)
+	if err != nil || emailCnt != 0 {
+		_ = TX.Rollback()
+		return nil, err
+	}
+
+	userID, err := TXQuery.InsertUser(ctx, dbpkg.InsertUserParams{
+		Email:    signUpRow.Email,
+		Username: signUpRow.Username,
+		Password: signUpRow.Password,
+	})
+	if err != nil {
+		_ = TX.Rollback()
+		return nil, err
+	}
+
+	profileID, err := TXQuery.CreateProfile(ctx, userID)
+	if err != nil {
+		_ = TX.Rollback()
+		return nil, err
+	}
+
+	loginToken, err := util.CreateLoginToken(strconv.Itoa(int(profileID)), time.Hour*12, s.hmacSecret)
+	if err != nil {
+		_ = TX.Rollback()
+		return nil, err
+	}
+	refreshTokenString, err := util.CreateRefreshToken(strconv.FormatInt(profileID, 10), time.Hour*100, s.hmacSecret)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error while creating refresh token")
+	}
+
+	return &pb.CodeVerificationResponse{
+		JwtToken:     loginToken,
+		RefreshToken: refreshTokenString,
+	}, nil
+}

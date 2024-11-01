@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AuthClient interface {
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	CodeVerification(ctx context.Context, in *CodeVerificationRequest, opts ...grpc.CallOption) (*CodeVerificationResponse, error)
 }
 
 type authClient struct {
@@ -52,12 +53,22 @@ func (c *authClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.C
 	return out, nil
 }
 
+func (c *authClient) CodeVerification(ctx context.Context, in *CodeVerificationRequest, opts ...grpc.CallOption) (*CodeVerificationResponse, error) {
+	out := new(CodeVerificationResponse)
+	err := c.cc.Invoke(ctx, "/IdeYarAPI.Auth/CodeVerification", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
 type AuthServer interface {
 	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	CodeVerification(context.Context, *CodeVerificationRequest) (*CodeVerificationResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -70,6 +81,9 @@ func (UnimplementedAuthServer) SignUp(context.Context, *SignUpRequest) (*SignUpR
 }
 func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthServer) CodeVerification(context.Context, *CodeVerificationRequest) (*CodeVerificationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CodeVerification not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 
@@ -120,6 +134,24 @@ func _Auth_Login_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_CodeVerification_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CodeVerificationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).CodeVerification(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/IdeYarAPI.Auth/CodeVerification",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).CodeVerification(ctx, req.(*CodeVerificationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -134,6 +166,10 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Login",
 			Handler:    _Auth_Login_Handler,
+		},
+		{
+			MethodName: "CodeVerification",
+			Handler:    _Auth_CodeVerification_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
