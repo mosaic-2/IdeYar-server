@@ -7,7 +7,16 @@ COPY . /home/app
 WORKDIR /home/app
 
 RUN go mod tidy
+RUN go build -o main ./cmd/server/main.go
 
-RUN go build ./cmd/server/main.go
+COPY scripts/create-tables.sh /home/app/scripts/create-tables.sh
 
-CMD [ "./main"]
+RUN chmod +x /home/app/scripts/create-tables.sh
+
+RUN echo '#!/bin/sh\n' > /home/app/entrypoint.sh && \
+    echo '/home/app/scripts/create-tables.sh\n' >> /home/app/entrypoint.sh && \
+    echo 'exec ./main "$@"\n' >> /home/app/entrypoint.sh
+
+RUN chmod +x /home/app/entrypoint.sh
+
+ENTRYPOINT ["/home/app/entrypoint.sh"]
