@@ -14,6 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up Docker build tag
+        id: vars
+        run: echo "BUILD_TAG=build-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v1
         with:
@@ -26,18 +30,31 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/mosaic-2/ideyar-server/ideyar:build:build
+          tags: ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: Deploy to production
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull Docker image and retag for production
+        run: |
+          docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
+          docker tag ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }} ghcr.io/mosaic-2/ideyar-server/ideyar:production
+
+      - name: Log in to production server
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.PRODUCTION_SERVER }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:build
+            docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:production
             docker-compose -f /path/to/docker-compose.yml up -d
