@@ -75,5 +75,14 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            export $(grep -v '^#' .env | xargs)
+
+      - name: Execute deployment commands on server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_SERVER }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
             docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:production
             docker-compose -f ~/docker-compose.yml up -d
