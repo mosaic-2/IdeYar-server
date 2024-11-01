@@ -59,15 +59,21 @@ jobs:
         run: |
           docker push ghcr.io/mosaic-2/ideyar-server/ideyar:production
 
-      - name: Log in to production server
-        uses: appleboy/ssh-action@v0.1.4
+      - name: Copy docker-compose.yml to server
+        uses: appleboy/scp-action@v0.1.8
+        with:
+          host: ${{ secrets.PRODUCTION_SERVER }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: './docker-compose.yml'
+          target: '~/docker-compose.yml'
+
+      - name: Execute deployment commands on server
+        uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.PRODUCTION_SERVER }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            scp -o StrictHostKeyChecking=no ./docker-compose.yml ${{ secrets.SSH_USERNAME }}@${{ secrets.PRODUCTION_SERVER }}:~/docker-compose.yml
-
-            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.PRODUCTION_SERVER }} "docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:production"
-
-            ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.PRODUCTION_SERVER }} "docker-compose -f ~/docker-compose.yml up -d"
+            docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:production
+            docker-compose -f ~/docker-compose.yml up -d
