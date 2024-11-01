@@ -32,7 +32,7 @@ jobs:
           tags: ghcr.io/mosaic-2/ideyar-server/ideyar:${{ env.BUILD_TAG }}
 
   deploy:
-    if: github.ref == 'refs/heads/main'
+#    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -60,7 +60,7 @@ jobs:
           docker push ghcr.io/mosaic-2/ideyar-server/ideyar:production
 
       - name: Copy docker-compose.yml to server
-        uses: appleboy/scp-action@v0.1.8
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.PRODUCTION_SERVER }}
           username: ${{ secrets.SSH_USERNAME }}
@@ -69,7 +69,7 @@ jobs:
           target: '~/docker-compose.yml'
 
       - name: Execute deployment commands on server
-        uses: appleboy/ssh-action@v0.1.8
+        uses: appleboy/ssh-action@v0.1.4
         with:
           host: ${{ secrets.PRODUCTION_SERVER }}
           username: ${{ secrets.SSH_USERNAME }}
