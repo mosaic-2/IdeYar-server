@@ -22,8 +22,8 @@ jobs:
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: mosaic-2
+          password: ${{ secrets.PERSONAL_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
