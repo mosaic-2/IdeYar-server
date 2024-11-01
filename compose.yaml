@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  khanmedia:
+  ideyar:
     build: .
     ports:
       - 8888:8888
@@ -37,4 +37,3 @@ services:
     restart: "no"
 volumes:
   postgres_data:
-  khanmedia_data:
