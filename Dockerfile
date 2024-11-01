@@ -1,4 +1,4 @@
-FROM golang:1.22.2-alpine3.19
+FROM golang:1.23.2-alpine3.19
 
 RUN mkdir -p /home/app
 
@@ -7,7 +7,7 @@ COPY . /home/app
 WORKDIR /home/app
 
 RUN go mod tidy
-RUN go build -o main ./cmd/server/main.go
+RUN go build -o main ./cmd/ideyar/main.go
 
 COPY scripts/create-tables.sh /home/app/scripts/create-tables.sh
 
