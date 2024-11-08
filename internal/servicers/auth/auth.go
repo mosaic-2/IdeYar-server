@@ -7,6 +7,7 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/mosaic-2/IdeYar-server/internal/config"
 	"github.com/mosaic-2/IdeYar-server/internal/sql/dbpkg"
 	"github.com/mosaic-2/IdeYar-server/pkg/authpb"
 )
@@ -20,11 +21,11 @@ type Server struct {
 
 func getQuery() (*dbpkg.Queries, *sql.DB, error) {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASS"),
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
+		config.GetDBUser(),
+		config.GetDBPass(),
+		config.GetDBHost(),
+		config.GetDBPort(),
+		config.GetDBName(),
 	)
 
 	conn, err := sql.Open("postgres", connStr)
