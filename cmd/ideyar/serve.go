@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/mosaic-2/IdeYar-server/internal/config"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
 	livenessService "github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
@@ -57,6 +58,8 @@ func runGRPCServer() error {
 		return fmt.Errorf("failed to listen on %s: %w", grpcPort, err)
 	}
 
+	secretKey := []byte(config.GetSecretKey())
+
 	grpcServer := grpc.NewServer()
 
 	// register grpc services here
@@ -66,7 +69,8 @@ func runGRPCServer() error {
 	}
 	livenessService.RegisterLivenessServer(grpcServer, livenessServer)
 
-	authServer, err := auth.NewServer()
+	// authentication service
+	authServer, err := auth.NewServer(secretKey)
 	if err != nil {
 		return fmt.Errorf("failed to initialize auth server: %w", err)
 	}

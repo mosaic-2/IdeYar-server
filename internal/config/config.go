@@ -5,11 +5,13 @@ import "os"
 type Config string
 
 var (
-	dbUser = os.Getenv("DB_USER")
-	dbPass = os.Getenv("DB_PASS")
-	dbHost = os.Getenv("DB_HOST")
-	dbPort = os.Getenv("DB_PORT")
-	dbName = os.Getenv("DB_NAME")
+	dbUser    = os.Getenv("DB_USER")
+	dbPass    = os.Getenv("DB_PASS")
+	dbHost    = os.Getenv("DB_HOST")
+	dbPort    = os.Getenv("DB_PORT")
+	dbName    = os.Getenv("DB_NAME")
+	dbLog     = os.Getenv("DB_LOG")
+	secretKey = os.Getenv("SECRET_KEY")
 )
 
 func GetDBUser() string {
@@ -30,4 +32,12 @@ func GetDBPort() string {
 
 func GetDBName() string {
 	return dbName
+}
+
+func GetDBLog() string {
+	return dbLog
+}
+
+func GetSecretKey() string {
+	return secretKey
 }

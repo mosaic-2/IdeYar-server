@@ -9,70 +9,55 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
+	"github.com/mosaic-2/IdeYar-server/internal/model"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
-	"github.com/mosaic-2/IdeYar-server/internal/sql/dbpkg"
 	pb "github.com/mosaic-2/IdeYar-server/pkg/authpb"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) SignUp(ctx context.Context, in *pb.SignUpRequest) (*pb.SignUpResponse, error) {
-	// convert email to lower case
-	in.Email = strings.ToLower(in.Email)
+func (s *Server) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpResponse, error) {
 
-	if !util.ValidateEmail(in.Email) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid email")
-	}
-	if !util.ValidateUsername(in.Username) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid username")
-	}
-	if !util.ValidatePassword(in.Password) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid password")
-	}
+	// convert email address to lower case
+	req.Email = strings.ToLower(req.GetEmail())
 
-	EmailCnt, err := s.query.ExistsUserEmail(ctx, in.Email)
+	db := dbutil.GormDB(ctx)
+
+	err := checkSignUpPreconditions(req, db)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-	if EmailCnt != 0 {
-		return nil, status.Errorf(codes.AlreadyExists, "email already exist")
-	}
-
-	UserNameCnt, err := s.query.ExistsUserUsername(ctx, in.Username)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-	if UserNameCnt != 0 {
-		return nil, status.Errorf(codes.AlreadyExists, "username already exist")
+		return nil, err
 	}
 
 	signUpExpTime := time.Now().Add(5 * time.Minute)
 	verificationCode := util.GenerateVerificationCode()
-	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(in.Password), 10)
+	bcryptPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error hashing password")
 	}
 
-	signupID, err := s.query.InsertSignup(ctx, dbpkg.InsertSignupParams{
-		Email:            in.Email,
-		Username:         in.Username,
+	signUp := model.SignUp{
+		Email:            req.GetEmail(),
+		Username:         req.GetUsername(),
 		Password:         string(bcryptPass),
 		VerificationCode: verificationCode,
 		Expire:           signUpExpTime,
-	})
+	}
+
+	err = db.Create(&signUp).Error
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	// send signup email
-	// go util.SendSignUpEmail(in.Email, verificationCode)
+	//TODO: send signup email
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(signUpExpTime),
 		Issuer:    "KhanWeb",
-		Subject:   strconv.Itoa(int(signupID)),
+		Subject:   strconv.Itoa(int(signUp.ID)),
 		Audience:  jwt.ClaimStrings{"SignUp"},
 	})
 
@@ -84,48 +69,29 @@ func (s *Server) SignUp(ctx context.Context, in *pb.SignUpRequest) (*pb.SignUpRe
 	return &pb.SignUpResponse{Token: tokenString}, nil
 }
 
-func (s *Server) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {
 
-	// verify user
-	// try to get user by email
-	userEmail, err1 := s.query.GetUserByEmail(ctx, strings.ToLower(in.UserNameOrEmail))
-	if err1 != nil && !errors.Is(err1, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.Internal, "Error retrieving user %s\n", in.UserNameOrEmail)
-	}
-	// try to get user by username
-	userUsername, err2 := s.query.GetUserByUsername(ctx, in.UserNameOrEmail)
-	if err2 != nil && !errors.Is(err2, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.Internal, "Error retrieving user %s\n", in.UserNameOrEmail)
-	}
-	// user doesn't exist
-	if err1 != nil && err2 != nil {
-		return nil, status.Errorf(codes.NotFound, "No such user %s\n", in.UserNameOrEmail)
+	db := dbutil.GormDB(ctx)
+
+	user, err := getUser(req, db)
+	if err != nil {
+		return nil, err
 	}
 
-	var user dbpkg.Account
-
-	if err1 == nil {
-		user = userEmail
-	} else {
-		user = userUsername
-	}
-	// if not verified raise error
 	// compare password
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(in.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		return nil, status.Errorf(codes.InvalidArgument, "Incorrect password")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error checking password")
 	}
 
-	profileID, err := s.query.GetProfileID(ctx, user.ID)
-
 	// generate Token
-	tokenString, err := util.CreateLoginToken(strconv.FormatInt(profileID, 10), time.Hour*12, s.hmacSecret)
+	tokenString, err := util.CreateLoginToken(strconv.FormatInt(user.ID, 10), time.Hour*12, s.hmacSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error creating token")
 	}
-	refreshTokenString, err := util.CreateRefreshToken(strconv.FormatInt(profileID, 10), time.Hour*100, s.hmacSecret)
+	refreshTokenString, err := util.CreateRefreshToken(strconv.FormatInt(user.ID, 10), time.Hour*100, s.hmacSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while creating refresh token")
 	}
@@ -134,11 +100,12 @@ func (s *Server) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginRespo
 		JwtToken:     tokenString,
 		RefreshToken: refreshTokenString,
 	}, nil
-
 }
 
-func (s *Server) CodeVerification(ctx context.Context, in *pb.CodeVerificationRequest) (*pb.CodeVerificationResponse, error) {
-	token, err := jwt.Parse(in.SignUpToken, func(token *jwt.Token) (interface{}, error) {
+func (s *Server) CodeVerification(ctx context.Context, req *pb.CodeVerificationRequest) (*pb.CodeVerificationResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	token, err := jwt.Parse(req.SignUpToken, func(token *jwt.Token) (interface{}, error) {
 		if token.Method != jwt.SigningMethodHS256 {
 			return nil, status.Errorf(codes.Unauthenticated, "unexpected signing method: %v", token.Header["alg"])
 		}
@@ -159,64 +126,77 @@ func (s *Server) CodeVerification(ctx context.Context, in *pb.CodeVerificationRe
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	signUpRow, err := s.query.GetSignUpData(ctx, int32(signUpID))
-	if err != nil {
-		return nil, err
+	signUpData := &model.SignUp{
+		ID: int32(signUpID),
 	}
 
-	if signUpRow.VerificationCode != in.Code {
-		return nil, status.Errorf(codes.InvalidArgument, "Wrong Code")
-	}
-
-	err = s.query.DeleteSignup(ctx, signUpRow.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	TX, err := s.conn.Begin()
-	defer func(TX *sql.Tx) {
-		_ = TX.Commit()
-	}(TX)
+	err = db.Take(signUpData).Error
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	TXQuery := s.query.WithTx(TX)
-
-	usernameCnt, err := TXQuery.ExistsUserUsername(ctx, signUpRow.Username)
-	if err != nil || usernameCnt != 0 {
-		_ = TX.Rollback()
-		return nil, err
+	if signUpData.VerificationCode != req.Code {
+		return nil, status.Errorf(codes.InvalidArgument, "Wrong Code")
 	}
 
-	emailCnt, err := TXQuery.ExistsUserEmail(ctx, signUpRow.Email)
-	if err != nil || emailCnt != 0 {
-		_ = TX.Rollback()
-		return nil, err
+	err = db.Delete(signUpData).Error
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	userID, err := TXQuery.InsertUser(ctx, dbpkg.InsertUserParams{
-		Email:    signUpRow.Email,
-		Username: signUpRow.Username,
-		Password: signUpRow.Password,
+	tx := db.Begin(&sql.TxOptions{
+		Isolation: sql.LevelSerializable,
 	})
+	defer func(tx *gorm.DB) {
+		_ = tx.Commit()
+	}(tx)
 	if err != nil {
-		_ = TX.Rollback()
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	profileID, err := TXQuery.CreateProfile(ctx, userID)
+	var duplicateUsername bool
+	err = tx.Raw(`
+		SELECT COUNT(*) > 0
+		FROM user_t
+		WHERE username = ?
+	`, signUpData.Username).Scan(&duplicateUsername).Error
 	if err != nil {
-		_ = TX.Rollback()
-		return nil, err
+		_ = tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	if duplicateUsername {
+		return nil, status.Errorf(codes.InvalidArgument, "username already exists")
 	}
 
-	loginToken, err := util.CreateLoginToken(strconv.Itoa(int(profileID)), time.Hour*12, s.hmacSecret)
+	var duplicateEmail bool
+	err = tx.Raw(`
+		SELECT COUNT(*) > 0
+		FROM user_t
+		WHERE email = ?
+	`, signUpData.Email).Scan(&duplicateEmail).Error
 	if err != nil {
-		_ = TX.Rollback()
-		return nil, err
+		_ = tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	refreshTokenString, err := util.CreateRefreshToken(strconv.FormatInt(profileID, 10), time.Hour*100, s.hmacSecret)
+
+	user := &model.User{
+		Email:    signUpData.Email,
+		Username: signUpData.Username,
+		Password: signUpData.Password,
+	}
+
+	err = tx.Create(user).Error
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	loginToken, err := util.CreateLoginToken(strconv.Itoa(int(user.ID)), time.Hour*12, s.hmacSecret)
+	if err != nil {
+		_ = tx.Rollback()
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	refreshTokenString, err := util.CreateRefreshToken(strconv.FormatInt(user.ID, 10), time.Hour*100, s.hmacSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error while creating refresh token")
 	}
@@ -225,4 +205,60 @@ func (s *Server) CodeVerification(ctx context.Context, in *pb.CodeVerificationRe
 		JwtToken:     loginToken,
 		RefreshToken: refreshTokenString,
 	}, nil
+}
+
+func checkSignUpPreconditions(req *pb.SignUpRequest, db *gorm.DB) error {
+	if !util.ValidateEmail(req.GetEmail()) {
+		return status.Errorf(codes.InvalidArgument, "invalid email")
+	}
+	if !util.ValidateUsername(req.GetUsername()) {
+		return status.Errorf(codes.InvalidArgument, "invalid username")
+	}
+	if !util.ValidatePassword(req.GetPassword()) {
+		return status.Errorf(codes.InvalidArgument, "invalid password")
+	}
+
+	var duplicateEmail bool
+	err := db.Raw(`
+		SELECT count(*) > 0
+		FROM user_t
+		WHERE email = ?
+	`, req.GetEmail()).Scan(&duplicateEmail).Error
+	if err != nil {
+		return status.Errorf(codes.Internal, err.Error())
+	}
+	if duplicateEmail {
+		return status.Errorf(codes.AlreadyExists, "email already exist")
+	}
+
+	var duplicateUsername bool
+	err = db.Raw(`
+		SELECT COUNT(*) > 0
+		FROM user_t
+		WHERE username = ?
+	`, req.GetUsername()).Scan(&duplicateUsername).Error
+	if err != nil {
+		return status.Errorf(codes.Internal, err.Error())
+	}
+	if duplicateUsername {
+		return status.Errorf(codes.AlreadyExists, "username already exist")
+	}
+
+	return nil
+}
+
+func getUser(req *pb.LoginRequest, db *gorm.DB) (*model.User, error) {
+
+	var user *model.User
+
+	err := db.Take(&user).
+		Where("email = ? OR username = ?", req.GetUserNameOrEmail()).Error
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return nil, status.Errorf(codes.InvalidArgument, "")
+		}
+		return nil, status.Errorf(codes.Internal, "")
+	}
+
+	return user, nil
 }
