@@ -1,5 +1,7 @@
 FROM golang:1.23.2-alpine3.19
 
+RUN apk add --no-cache postgresql-client
+
 RUN mkdir -p /home/app
 
 COPY . /home/app
