@@ -1,12 +1,12 @@
-package auth
+package authImpl
 
 import (
 	_ "github.com/lib/pq"
-	"github.com/mosaic-2/IdeYar-server/pkg/authpb"
+	"github.com/mosaic-2/IdeYar-server/pkg/authService"
 )
 
 type Server struct {
-	authpb.UnimplementedAuthServer
+	authService.UnimplementedAuthServer
 	hmacSecret []byte
 }
 

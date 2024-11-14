@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	authImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
+	"github.com/mosaic-2/IdeYar-server/pkg/authService"
 	"log"
 	"net"
 	"net/http"
@@ -15,10 +17,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/mosaic-2/IdeYar-server/internal/config"
-	"github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
 	livenessService "github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
-	"github.com/mosaic-2/IdeYar-server/pkg/authpb"
 )
 
 var (
@@ -70,11 +70,11 @@ func runGRPCServer() error {
 	livenessService.RegisterLivenessServer(grpcServer, livenessServer)
 
 	// authentication service
-	authServer, err := auth.NewServer(secretKey)
+	authServer, err := authImpl.NewServer(secretKey)
 	if err != nil {
 		return fmt.Errorf("failed to initialize auth server: %w", err)
 	}
-	authpb.RegisterAuthServer(grpcServer, authServer)
+	authService.RegisterAuthServer(grpcServer, authServer)
 
 	log.Printf("Starting gRPC server on %s", grpcPort)
 	return grpcServer.Serve(lis)
@@ -94,7 +94,7 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = authpb.RegisterAuthHandlerFromEndpoint(
+	err = authService.RegisterAuthHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,

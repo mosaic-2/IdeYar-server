@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/api/annotations.proto";
 
 package IdeYarAPI;
-option go_package = "pkg/authpb";
+option go_package = "./authService";
 
 service Auth {
   rpc SignUp (SignUpRequest) returns (SignUpResponse) {

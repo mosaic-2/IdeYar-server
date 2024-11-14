@@ -1,4 +1,4 @@
-package auth
+package authImpl
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
 	"github.com/mosaic-2/IdeYar-server/internal/model"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
-	pb "github.com/mosaic-2/IdeYar-server/pkg/authpb"
+	pb "github.com/mosaic-2/IdeYar-server/pkg/authService"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -254,7 +254,7 @@ func getUser(req *pb.LoginRequest, db *gorm.DB) (*model.User, error) {
 	err := db.Take(&user).
 		Where("email = ? OR username = ?", req.GetUserNameOrEmail()).Error
 	if err != nil {
-		if err != gorm.ErrRecordNotFound {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.InvalidArgument, "")
 		}
 		return nil, status.Errorf(codes.Internal, "")
