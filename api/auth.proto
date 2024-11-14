@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package IdeYarAPI;
+option go_package = "./authService";
+
+service Auth {
+  rpc SignUp (SignUpRequest) returns (SignUpResponse) {
+    option (google.api.http) = {
+      post: "/auth/signup"
+      body: "*"
+    };
+  }
+  rpc Login (LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/auth/login"
+      body: "*"
+    };
+  };
+  rpc CodeVerification (CodeVerificationRequest) returns (CodeVerificationResponse) {
+    option (google.api.http) = {
+      post: "/auth/code-verification"
+      body: "*"
+    };
+  };
+}
+
+message SignUpRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message SignUpResponse {
+  string token = 1;
+}
+
+message LoginRequest {
+  string userNameOrEmail = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string jwtToken = 1;
+  string refreshToken = 2;
+}
+
+message CodeVerificationRequest {
+  string signUpToken = 1;
+  string code = 2;
+}
+
+message CodeVerificationResponse {
+  string jwtToken = 1;
+  string refreshToken = 2;
+}

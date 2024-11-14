@@ -10,7 +10,7 @@ option go_package = "./../pkg/LivenessService";
 service Liveness {
   rpc CheckLiveness (google.protobuf.Empty) returns (CheckLivenessResponse) {
     option (google.api.http) = {
-      get: "/v1/liveness/checkliveness"
+      get: "/liveness/checkliveness"
     };
   }
 }

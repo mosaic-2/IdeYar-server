@@ -1,1 +1,0 @@
-# set this dir to pkg dir in sqlc config
