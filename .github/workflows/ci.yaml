@@ -75,7 +75,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            export $(grep -v '^#' .env | xargs)
+            export $(grep -v '^#' env | xargs)
 
       - name: Execute deployment commands on server
         uses: appleboy/ssh-action@master

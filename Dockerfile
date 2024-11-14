@@ -13,9 +13,9 @@ COPY scripts/create-tables.sh /home/app/scripts/create-tables.sh
 
 RUN chmod +x /home/app/scripts/create-tables.sh
 
-RUN echo '#!/bin/sh\n' > /home/app/entrypoint.sh && \
-    echo '/home/app/scripts/create-tables.sh\n' >> /home/app/entrypoint.sh && \
-    echo 'exec ./ideyar "$@"\n' >> /home/app/entrypoint.sh
+RUN echo '#!/bin/sh' > /home/app/entrypoint.sh && \
+    echo '/home/app/scripts/create-tables.sh' >> /home/app/entrypoint.sh && \
+    echo 'exec ./ideyar "$@"' >> /home/app/entrypoint.sh
 
 RUN chmod +x /home/app/entrypoint.sh
 

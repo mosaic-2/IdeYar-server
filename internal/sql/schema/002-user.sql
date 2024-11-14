@@ -7,7 +7,3 @@ CREATE TABLE IF NOT EXISTS user_t (
 );
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
-CREATE INDEX idx_account_username
-ON accountz
-USING gin (username gin_trgm_ops);
