@@ -85,4 +85,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             docker pull ghcr.io/mosaic-2/ideyar-server/ideyar:production
-            docker-compose -f ~/docker-compose.yml up -d
+            docker-compose -f ~/docker-compose.yml --build --pull --force-recreate -d
