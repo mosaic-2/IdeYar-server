@@ -107,10 +107,10 @@ func runHTTPServer(ctx context.Context) error {
 
 	// Set up CORS middleware
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, // Allow all origins
+		AllowedOrigins:   []string{"http://localhost:3000", "*"}, // Allow all origins
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: false, // Credentials are not allowed
+		AllowedHeaders:   []string{"*"}, // Allow all headers
+		AllowCredentials: true,
 	})
 
 	httpServer := &http.Server{
