@@ -22,12 +22,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/mosaic-2/IdeYar-server/internal/config"
-	authImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
 	userProfileImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/user-profile"
 	livenessService "github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
 	"github.com/mosaic-2/IdeYar-server/pkg/UserProfileService"
-	"github.com/mosaic-2/IdeYar-server/pkg/authService"
 )
 
 var (
