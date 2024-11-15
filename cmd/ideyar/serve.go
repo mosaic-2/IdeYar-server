@@ -17,6 +17,7 @@ import (
 	postsrvicepb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/cors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -125,9 +126,17 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
+	// Set up CORS middleware
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "*"}, // Allow all origins
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"}, // Allow all headers
+		AllowCredentials: true,
+	})
+
 	httpServer := &http.Server{
 		Addr:    httpPort,
-		Handler: util.AuthMiddleware(mux),
+		Handler: c.Handler(util.AuthMiddleware(mux)),
 	}
 
 	log.Printf("Starting HTTP server on %s", httpPort)
