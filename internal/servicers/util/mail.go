@@ -7,7 +7,7 @@ import (
 
 func verificationEmail(code string) (string, error) {
 
-	tmp, err := template.ParseFiles("./internal/service/utils/templates/verification.gohtml")
+	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
 	if err != nil {
 		return "", err
 	}
