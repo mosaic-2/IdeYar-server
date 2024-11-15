@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package IdeYarAPI;
+option go_package = "./../pkg/UserProfileService";
+
+service UserProfile {
+  rpc ChangeEmail (ChangeEmailRequest) returns (ChangeEmailResponse) {
+    option (google.api.http) = {
+      post: "/user-profile/change-email"
+      body: "*"
+    };
+  }
+  rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse) {
+    option (google.api.http) = {
+      post: "/user-profile/change-password"
+      body: "*"
+    };
+  };
+  rpc UpdateProfileInfo (UpdateProfileInfoRequest) returns (UpdateProfileInfoResponse) {
+    option (google.api.http) = {
+      post: "/user-profile/code-verification"
+      body: "*"
+    };
+  };
+}
+
+message ChangeEmailRequest {
+  string email = 1;
+}
+
+message ChangeEmailResponse {
+}
+
+message ChangePasswordRequest {
+  string oldPassword = 1;
+  string newPassword = 2;
+}
+
+message ChangePasswordResponse {
+}
+
+message UpdateProfileInfoRequest {
+  string name = 1;
+  string username = 2;
+  string bio = 3;
+}
+
+message UpdateProfileInfoResponse {
+  string name = 1;
+  string username = 2;
+  string bio = 3;
+}
+
+
