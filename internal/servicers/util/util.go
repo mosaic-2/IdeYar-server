@@ -45,9 +45,9 @@ func CreateRefreshToken(userID string, duration time.Duration, key []byte) (stri
 
 func SendSignUpEmail(email string, code string) {
 	username := "mmdhossein.haghdadi@gmail.com"
-	password := "xsmtpsib-eb6248a76b82480199faf72cd07e43092f9d8c6ed89357698b5ac6a362171213-sRFDAq53XJx0c9nM"
+	password := "xsmtpsib-eb6248a76b82480199faf72cd07e43092f9d8c6ed89357698b5ac6a362171213-3aXDxUdMpNI01h9r"
 
-	from := "no-reply@khanmedia.ir"
+	from := "no-reply@ideyar-app.ir"
 
 	// Receiver email address.
 	to := []string{
