@@ -13,7 +13,7 @@ import (
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/authservice"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/postservice"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
-	authservicepb "github.com/mosaic-2/IdeYar-server/pkg/authServicepb"
+	authservicepb "github.com/mosaic-2/IdeYar-server/pkg/authservicepb"
 	postsrvicepb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
