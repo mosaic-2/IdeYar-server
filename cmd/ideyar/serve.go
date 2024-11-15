@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/rs/cors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -104,9 +105,17 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
+	// Set up CORS middleware
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Allow all origins
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"}, // Allow all headers
+		AllowCredentials: true,
+	})
+
 	httpServer := &http.Server{
 		Addr:    httpPort,
-		Handler: mux,
+		Handler: c.Handler(mux),
 	}
 
 	log.Printf("Starting HTTP server on %s", httpPort)
