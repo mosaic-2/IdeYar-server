@@ -109,8 +109,8 @@ func runHTTPServer(ctx context.Context) error {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"}, // Allow all origins
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"}, // Allow all headers
-		AllowCredentials: true,
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: false, // Credentials are not allowed
 	})
 
 	httpServer := &http.Server{
