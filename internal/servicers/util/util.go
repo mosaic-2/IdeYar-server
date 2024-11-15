@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/smtp"
 	"strconv"
 	"strings"
 	"time"
@@ -105,4 +106,45 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func SendSignUpEmail(email string, code string) {
+	username := "mmdhossein.haghdadi@gmail.com"
+	password := "xsmtpsib-eb6248a76b82480199faf72cd07e43092f9d8c6ed89357698b5ac6a362171213-3aXDxUdMpNI01h9r"
+
+	from := "no-reply@ideyar-app.ir"
+
+	// Receiver email address.
+	to := []string{
+		email,
+	}
+
+	// smtp server configuration.
+	smtpHost := "smtp-relay.brevo.com"
+	smtpPort := "587"
+
+	// Message.
+	message, err := verificationEmail(code)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	mimeHeaders := "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n"
+
+	// Email subject.
+	header := fmt.Sprintf("From: no-reply@khanmedia.ir\r\nSubject: Email Verification\r\nTo: %s\r\n", email)
+
+	// Putting together the email message with headers and body content.
+	emailMessage := []byte(header + mimeHeaders + "\r\n" + message)
+
+	// Authentication.
+	auth := smtp.PlainAuth("", username, password, smtpHost)
+
+	// Sending email.
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, emailMessage)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

@@ -22,8 +22,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/mosaic-2/IdeYar-server/internal/config"
+	authImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
+	userProfileImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/user-profile"
 	livenessService "github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
+	"github.com/mosaic-2/IdeYar-server/pkg/UserProfileService"
+	"github.com/mosaic-2/IdeYar-server/pkg/authService"
 )
 
 var (
@@ -88,6 +92,12 @@ func runGRPCServer() error {
 	}
 	postsrvicepb.RegisterPostServer(grpcServer, postServer)
 
+	userProfileServer, err := userProfileImpl.NewServer(secretKey)
+	if err != nil {
+		return fmt.Errorf("failed to initialize user profile server: %w", err)
+	}
+	UserProfileService.RegisterUserProfileServer(grpcServer, userProfileServer)
+
 	log.Printf("Starting gRPC server on %s", grpcPort)
 	return grpcServer.Serve(lis)
 }
@@ -126,14 +136,23 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
+	err = UserProfileService.RegisterUserProfileHandlerFromEndpoint(
+		ctx,
+		mux,
+		"localhost"+grpcPort,
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
+	}
+
 	// Set up CORS middleware
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "*"}, // Allow all origins
+		AllowedOrigins:   []string{"http://localhost:3000", "https://back.ideyar-app.ir"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"}, // Allow all headers
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
-
 	httpServer := &http.Server{
 		Addr:    httpPort,
 		Handler: c.Handler(util.AuthMiddleware(mux)),
