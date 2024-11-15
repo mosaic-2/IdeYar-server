@@ -3,14 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
-	authImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
-	"github.com/mosaic-2/IdeYar-server/pkg/authService"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/mosaic-2/IdeYar-server/internal/servicers/authservice"
+	"github.com/mosaic-2/IdeYar-server/internal/servicers/postservice"
+	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
+	authservicepb "github.com/mosaic-2/IdeYar-server/pkg/authServicepb"
+	postsrvicepb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -70,11 +74,18 @@ func runGRPCServer() error {
 	livenessService.RegisterLivenessServer(grpcServer, livenessServer)
 
 	// authentication service
-	authServer, err := authImpl.NewServer(secretKey)
+	authServer, err := authservice.NewServer(secretKey)
 	if err != nil {
 		return fmt.Errorf("failed to initialize auth server: %w", err)
 	}
-	authService.RegisterAuthServer(grpcServer, authServer)
+	authservicepb.RegisterAuthServer(grpcServer, authServer)
+
+	// post service
+	postServer, err := postservice.NewServer(secretKey)
+	if err != nil {
+		return fmt.Errorf("failed to initialize post server: %w", err)
+	}
+	postsrvicepb.RegisterPostServer(grpcServer, postServer)
 
 	log.Printf("Starting gRPC server on %s", grpcPort)
 	return grpcServer.Serve(lis)
@@ -94,7 +105,17 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = authService.RegisterAuthHandlerFromEndpoint(
+	err = authservicepb.RegisterAuthHandlerFromEndpoint(
+		ctx,
+		mux,
+		"localhost"+grpcPort,
+		[]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
+	}
+
+	err = postsrvicepb.RegisterPostHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
@@ -106,7 +127,7 @@ func runHTTPServer(ctx context.Context) error {
 
 	httpServer := &http.Server{
 		Addr:    httpPort,
-		Handler: mux,
+		Handler: util.AuthMiddleware(mux),
 	}
 
 	log.Printf("Starting HTTP server on %s", httpPort)

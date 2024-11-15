@@ -1,12 +1,11 @@
-package authImpl
+package postservice
 
 import (
-	_ "github.com/lib/pq"
-	"github.com/mosaic-2/IdeYar-server/pkg/authService"
+	pb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
 )
 
 type Server struct {
-	authService.UnimplementedAuthServer
+	pb.UnimplementedPostServer
 	hmacSecret []byte
 }
 

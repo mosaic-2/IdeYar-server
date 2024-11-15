@@ -1,11 +1,20 @@
 package util
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"math/rand"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mosaic-2/IdeYar-server/internal/config"
 )
+
+type ProfileIDCtx struct{}
 
 func GenerateVerificationCode() string {
 	const charset = `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`
@@ -39,4 +48,61 @@ func CreateRefreshToken(userID string, duration time.Duration, key []byte) (stri
 	})
 
 	return token.SignedString(key)
+}
+
+func AuthMiddleware(next http.Handler) http.Handler {
+
+	hmacSecret := []byte(config.GetSecretKey())
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		allowedMethods := []string{
+			"/auth/signup",
+			"/auth/login",
+			"/auth/code-verification",
+		}
+
+		for _, method := range allowedMethods {
+			if r.RequestURI == method {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		bearerToken := ""
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			bearerToken = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			log.Printf("No Bearer Token found")
+			return
+		}
+
+		token, err := jwt.Parse(bearerToken, func(token *jwt.Token) (interface{}, error) {
+			// Don't forget to validate the alg is what you expect:
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return hmacSecret, nil
+		})
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		profileIDStr, err := token.Claims.GetSubject()
+		if err != nil {
+			return
+		}
+
+		profileID, err := strconv.ParseInt(profileIDStr, 10, 64)
+		if err != nil {
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), ProfileIDCtx{}, profileID)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

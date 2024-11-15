@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package IdeYarAPI;
+option go_package = "./../pkg/postsrvicepb";
+
+service Post {
+    rpc Create(CreateRequest) returns (CreateResponse){
+        option (google.api.http) = {
+            post: "/post"
+            body: "*"
+        };
+    };
+}
+
+message CreateRequest {
+    string title = 1;
+    string minimum_fund = 2;
+    repeated PostDetail post_details = 3;
+}
+
+message CreateResponse {
+    int64 id = 1;
+}
+
+message PostDetail {
+    string title = 1;
+    string description = 2;
+    int32 order = 3;
+}

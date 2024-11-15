@@ -1,4 +1,4 @@
-package authImpl
+package authservice
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
 	"github.com/mosaic-2/IdeYar-server/internal/model"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
-	pb "github.com/mosaic-2/IdeYar-server/pkg/authService"
+	pb "github.com/mosaic-2/IdeYar-server/pkg/authServicepb"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
