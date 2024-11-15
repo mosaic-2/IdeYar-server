@@ -107,12 +107,11 @@ func runHTTPServer(ctx context.Context) error {
 
 	// Set up CORS middleware
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "*"}, // Allow all origins
+		AllowedOrigins:   []string{"http://localhost:3000", "https://back.ideyar-app.ir"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"}, // Allow all headers
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
-
 	httpServer := &http.Server{
 		Addr:    httpPort,
 		Handler: c.Handler(mux),
