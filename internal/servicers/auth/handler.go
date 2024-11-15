@@ -52,7 +52,7 @@ func (s *Server) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpR
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	//TODO: send signup email
+	util.SendSignUpEmail(req.GetEmail(), verificationCode)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(signUpExpTime),
