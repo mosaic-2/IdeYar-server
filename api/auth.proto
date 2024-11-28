@@ -20,8 +20,7 @@ service Auth {
   };
   rpc CodeVerification (CodeVerificationRequest) returns (CodeVerificationResponse) {
     option (google.api.http) = {
-      post: "/auth/code-verification"
-      body: "*"
+      get: "/auth/code-verification/{signUpToken}/{code}"
     };
   };
 }
@@ -52,6 +51,5 @@ message CodeVerificationRequest {
 }
 
 message CodeVerificationResponse {
-  string jwtToken = 1;
-  string refreshToken = 2;
+  string html_content = 1;
 }

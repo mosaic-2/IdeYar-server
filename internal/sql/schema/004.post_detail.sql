@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS post_detail (
 	post_id BIGINT NOT NULL,
 	FOREIGN KEY (post_id)
 		REFERENCES post(id)
-)
+);

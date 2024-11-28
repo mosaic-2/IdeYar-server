@@ -138,7 +138,7 @@ func SendSignUpEmail(email string, code string) {
 	mimeHeaders := "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n"
 
 	// Email subject.
-	header := fmt.Sprintf("From: no-reply@khanmedia.ir\r\nSubject: Email Verification\r\nTo: %s\r\n", email)
+	header := fmt.Sprintf("From: no-reply@ideyar-app.ir\r\nSubject: Email Verification\r\nTo: %s\r\n", email)
 
 	// Putting together the email message with headers and body content.
 	emailMessage := []byte(header + mimeHeaders + "\r\n" + message)

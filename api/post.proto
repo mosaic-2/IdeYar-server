@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/api/annotations.proto";
 
 package IdeYarAPI;
-option go_package = "./../pkg/postsrvicepb";
+option go_package = "./../pkg/postservicepb";
 
 service Post {
     rpc Create(CreateRequest) returns (CreateResponse){
