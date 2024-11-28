@@ -136,8 +136,15 @@ func runHTTPServer(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
-	mux.HandlePath("POST", "/api/post-image", postservice.HandlePostImage)
-	mux.HandlePath("GET", "/api/image/{image}", postservice.HandleImage)
+
+	err = mux.HandlePath("POST", "/api/post-image", postservice.HandlePostImage)
+	if err != nil {
+		return err
+	}
+	err = mux.HandlePath("GET", "/api/image/{image}", postservice.HandleImage)
+	if err != nil {
+		return err
+	}
 
 	err = UserProfileService.RegisterUserProfileHandlerFromEndpoint(
 		ctx,
@@ -151,7 +158,7 @@ func runHTTPServer(ctx context.Context) error {
 
 	// Set up CORS middleware
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "https://back.ideyar-app.ir"},
+		AllowedOrigins:   []string{"http://localhost:3000", "https://back.ideyar-app.ir", "https://back.ideyar-app.ir"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
