@@ -113,7 +113,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func SendSignUpEmail(email string, code string) {
+func SendSignUpEmail(email string, signeUpToken string, code string) {
 	username := "mmdhossein.haghdadi@gmail.com"
 	password := "xsmtpsib-eb6248a76b82480199faf72cd07e43092f9d8c6ed89357698b5ac6a362171213-3aXDxUdMpNI01h9r"
 
@@ -129,7 +129,7 @@ func SendSignUpEmail(email string, code string) {
 	smtpPort := "587"
 
 	// Message.
-	message, err := verificationEmail(code)
+	message, err := verificationEmail(fmt.Sprintf("ideyar-app.ir/code-veification/%s/%s", signeUpToken, code))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -138,7 +138,7 @@ func SendSignUpEmail(email string, code string) {
 	mimeHeaders := "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n"
 
 	// Email subject.
-	header := fmt.Sprintf("From: no-reply@khanmedia.ir\r\nSubject: Email Verification\r\nTo: %s\r\n", email)
+	header := fmt.Sprintf("From: no-reply@ideyar-app.ir\r\nSubject: Email Verification\r\nTo: %s\r\n", email)
 
 	// Putting together the email message with headers and body content.
 	emailMessage := []byte(header + mimeHeaders + "\r\n" + message)

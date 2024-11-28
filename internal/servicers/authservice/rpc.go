@@ -52,8 +52,6 @@ func (s *Server) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpR
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	util.SendSignUpEmail(req.GetEmail(), verificationCode)
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(signUpExpTime),
 		Issuer:    "KhanWeb",
@@ -65,6 +63,8 @@ func (s *Server) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpR
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Error creating token")
 	}
+
+	go util.SendSignUpEmail(req.GetEmail(), tokenString, verificationCode)
 
 	return &pb.SignUpResponse{Token: tokenString}, nil
 }
@@ -191,20 +191,7 @@ func (s *Server) CodeVerification(ctx context.Context, req *pb.CodeVerificationR
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	loginToken, err := util.CreateLoginToken(strconv.Itoa(int(user.ID)), time.Hour*12, s.hmacSecret)
-	if err != nil {
-		_ = tx.Rollback()
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-	refreshTokenString, err := util.CreateRefreshToken(strconv.FormatInt(user.ID, 10), time.Hour*100, s.hmacSecret)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error while creating refresh token")
-	}
-
-	return &pb.CodeVerificationResponse{
-		JwtToken:     loginToken,
-		RefreshToken: refreshTokenString,
-	}, nil
+	return &pb.CodeVerificationResponse{}, nil
 }
 
 func checkSignUpPreconditions(req *pb.SignUpRequest, db *gorm.DB) error {

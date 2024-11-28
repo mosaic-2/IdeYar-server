@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS post (
 	user_id BIGINT NOT NULL,
 	minimum_fund DECIMAL(28, 6) NOT NULL,
 	fund_raised DECIMAL(28, 6) NOT NULL DEFAULT 0
-)
+);

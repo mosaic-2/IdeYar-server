@@ -52,6 +52,4 @@ message CodeVerificationRequest {
 }
 
 message CodeVerificationResponse {
-  string jwtToken = 1;
-  string refreshToken = 2;
 }
