@@ -12,10 +12,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/mosaic-2/IdeYar-server/internal/config"
+	"google.golang.org/grpc/metadata"
 )
 
-type ProfileIDCtx struct{}
+type UserIDCtxKey struct{}
 
 func GenerateVerificationCode() string {
 	const charset = `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`
@@ -75,6 +77,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		if strings.HasPrefix(authHeader, "Bearer ") {
 			bearerToken = strings.TrimPrefix(authHeader, "Bearer ")
 		} else {
+			w.WriteHeader(http.StatusUnauthorized)
 			log.Printf("No Bearer Token found")
 			return
 		}
@@ -91,20 +94,22 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		profileIDStr, err := token.Claims.GetSubject()
+		userIDStr, err := token.Claims.GetSubject()
 		if err != nil {
 			return
 		}
 
-		profileID, err := strconv.ParseInt(profileIDStr, 10, 64)
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
 		if err != nil {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ProfileIDCtx{}, profileID)
+		ctx := context.WithValue(r.Context(), UserIDCtxKey{}, userID)
 		r = r.WithContext(ctx)
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		r.Header.Set("x-user-id", userIDStr)
+
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -147,4 +152,18 @@ func SendSignUpEmail(email string, code string) {
 		fmt.Println(err)
 		return
 	}
+}
+
+func GenerateFileName() string {
+	return uuid.New().String()
+}
+
+func GetUserIDFromCtx(ctx context.Context) int64 {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return 0
+	}
+
+	userID, _ := strconv.ParseInt(md["user-id"][0], 10, 64)
+	return int64(userID)
 }

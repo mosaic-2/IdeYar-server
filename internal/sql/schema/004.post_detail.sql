@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS post_detail (
 	order_c INT NOT NULL,
 	title VARCHAR(255),
 	description TEXT,
-	image UUID,
+	image TEXT,
 	post_id BIGINT NOT NULL,
 	FOREIGN KEY (post_id)
 		REFERENCES post(id)

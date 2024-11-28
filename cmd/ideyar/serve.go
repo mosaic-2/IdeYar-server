@@ -20,6 +20,7 @@ import (
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/mosaic-2/IdeYar-server/internal/config"
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
@@ -101,7 +102,9 @@ func runGRPCServer() error {
 }
 
 func runHTTPServer(ctx context.Context) error {
-	mux := runtime.NewServeMux()
+	mux := runtime.NewServeMux(
+		runtime.WithMetadata(customMetadataAnnotator),
+	)
 
 	// register http services here
 	err := livenessService.RegisterLivenessHandlerFromEndpoint(
@@ -133,6 +136,8 @@ func runHTTPServer(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
+	mux.HandlePath("POST", "/api/post-image", postservice.HandlePostImage)
+	mux.HandlePath("GET", "/api/image/{image}", postservice.HandleImage)
 
 	err = UserProfileService.RegisterUserProfileHandlerFromEndpoint(
 		ctx,
@@ -158,4 +163,12 @@ func runHTTPServer(ctx context.Context) error {
 
 	log.Printf("Starting HTTP server on %s", httpPort)
 	return httpServer.ListenAndServe()
+}
+
+func customMetadataAnnotator(ctx context.Context, r *http.Request) metadata.MD {
+	userID := r.Header.Get("x-user-id")
+	if userID != "" {
+		return metadata.Pairs("user-id", userID)
+	}
+	return nil
 }

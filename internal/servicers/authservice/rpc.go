@@ -251,8 +251,8 @@ func getUser(req *pb.LoginRequest, db *gorm.DB) (*model.User, error) {
 
 	var user *model.User
 
-	err := db.Take(&user).
-		Where("email = ? OR username = ?", req.GetUserNameOrEmail()).Error
+	err := db.Where("email = ? OR username = ?", req.GetUserNameOrEmail(), req.GetUserNameOrEmail()).
+		Take(&user).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Errorf(codes.InvalidArgument, "")

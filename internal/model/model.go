@@ -48,7 +48,7 @@ type PostDetail struct {
 	Order       int32 `gorm:"column:order_c"`
 	Title       string
 	Description string
-	Image       []byte
+	Image       string
 	PostID      int64
 }
 

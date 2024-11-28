@@ -2,6 +2,7 @@ package postservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
 	"github.com/mosaic-2/IdeYar-server/internal/model"
@@ -17,7 +18,7 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 
 	db := dbutil.GormDB(ctx)
 
-	userID, _ := ctx.Value(util.ProfileIDCtx{}).(int64)
+	userID := util.GetUserIDFromCtx(ctx)
 
 	var id int64
 
@@ -55,6 +56,55 @@ func (s *Server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 	}
 
 	return &pb.CreateResponse{Id: id}, nil
+}
+
+func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostResponse, error) {
+
+	db := dbutil.GormDB(ctx)
+
+	postID := req.GetId()
+
+	post := model.Post{}
+	post.ID = postID
+
+	err := db.Model(&post).Take(&post).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "could not find post")
+		}
+		return nil, status.Error(codes.Internal, "error retreiving post")
+	}
+
+	postDetails := []model.PostDetail{}
+
+	err = db.Model(model.PostDetail{}).
+		Where("post_id = ?", postID).
+		Scan(&postDetails).Error
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.Internal, "error retreiving post")
+		}
+	}
+
+	postDetailsPb := []*pb.PostDetail{}
+
+	for _, postD := range postDetails {
+		postDetailsPb = append(postDetailsPb, &pb.PostDetail{
+			Title:       postD.Title,
+			Description: postD.Description,
+			Order:       postD.Order,
+			Image:       &postD.Image,
+		})
+	}
+
+	return &pb.GetPostResponse{
+		UserId:      post.UserID,
+		Title:       post.Title,
+		MinimumFund: post.MinimumFund.String(),
+		FundRaised:  post.FundRaised.String(),
+		PostDetails: postDetailsPb,
+	}, nil
+
 }
 
 func toPostCreatePayload(req *pb.CreateRequest, userID int64) (*model.Post, []*model.PostDetail, error) {
