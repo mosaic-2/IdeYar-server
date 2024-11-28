@@ -1,13 +1,23 @@
 package util
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"math/rand"
+	"net/http"
 	"net/smtp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+	"github.com/mosaic-2/IdeYar-server/internal/config"
+	"google.golang.org/grpc/metadata"
 )
+
+type UserIDCtxKey struct{}
 
 func GenerateVerificationCode() string {
 	const charset = `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`
@@ -41,6 +51,66 @@ func CreateRefreshToken(userID string, duration time.Duration, key []byte) (stri
 	})
 
 	return token.SignedString(key)
+}
+
+func AuthMiddleware(next http.Handler) http.Handler {
+
+	hmacSecret := []byte(config.GetSecretKey())
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		allowedMethods := []string{
+			"/auth/signup",
+			"/auth/login",
+			"/auth/code-verification",
+		}
+
+		for _, method := range allowedMethods {
+			if r.RequestURI == method {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		authHeader := r.Header.Get("Authorization")
+		bearerToken := ""
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			bearerToken = strings.TrimPrefix(authHeader, "Bearer ")
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			log.Printf("No Bearer Token found")
+			return
+		}
+
+		token, err := jwt.Parse(bearerToken, func(token *jwt.Token) (interface{}, error) {
+			// Don't forget to validate the alg is what you expect:
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return hmacSecret, nil
+		})
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		userIDStr, err := token.Claims.GetSubject()
+		if err != nil {
+			return
+		}
+
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err != nil {
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserIDCtxKey{}, userID)
+		r = r.WithContext(ctx)
+
+		r.Header.Set("x-user-id", userIDStr)
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func SendSignUpEmail(email string, code string) {
@@ -82,4 +152,18 @@ func SendSignUpEmail(email string, code string) {
 		fmt.Println(err)
 		return
 	}
+}
+
+func GenerateFileName() string {
+	return uuid.New().String()
+}
+
+func GetUserIDFromCtx(ctx context.Context) int64 {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return 0
+	}
+
+	userID, _ := strconv.ParseInt(md["user-id"][0], 10, 64)
+	return int64(userID)
 }
