@@ -33,7 +33,6 @@ message SignUpRequest {
 }
 
 message SignUpResponse {
-  string token = 1;
 }
 
 message LoginRequest {

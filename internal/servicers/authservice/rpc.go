@@ -66,7 +66,7 @@ func (s *Server) SignUp(ctx context.Context, req *pb.SignUpRequest) (*pb.SignUpR
 
 	go util.SendSignUpEmail(req.GetEmail(), tokenString, verificationCode)
 
-	return &pb.SignUpResponse{Token: tokenString}, nil
+	return &pb.SignUpResponse{}, nil
 }
 
 func (s *Server) Login(ctx context.Context, req *pb.LoginRequest) (*pb.LoginResponse, error) {

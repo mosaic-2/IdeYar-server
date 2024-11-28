@@ -136,8 +136,15 @@ func runHTTPServer(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
-	mux.HandlePath("POST", "/api/post-image", postservice.HandlePostImage)
-	mux.HandlePath("GET", "/api/image/{image}", postservice.HandleImage)
+
+	err = mux.HandlePath("POST", "/api/post-image", postservice.HandlePostImage)
+	if err != nil {
+		return err
+	}
+	err = mux.HandlePath("GET", "/api/image/{image}", postservice.HandleImage)
+	if err != nil {
+		return err
+	}
 
 	err = UserProfileService.RegisterUserProfileHandlerFromEndpoint(
 		ctx,
