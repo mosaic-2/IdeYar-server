@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/mosaic-2/IdeYar-server/internal/interceptor"
 	"log"
 	"net"
 	"net/http"
@@ -26,7 +27,6 @@ import (
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
 	postImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/post"
 	userProfileImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/user-profile"
-	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
 )
 
 var (
@@ -171,7 +171,7 @@ func runHTTPServer(ctx context.Context) error {
 	})
 	httpServer := &http.Server{
 		Addr:    httpPort,
-		Handler: c.Handler(util.AuthMiddleware(mux)),
+		Handler: c.Handler(interceptor.AuthMiddleware(mux)),
 	}
 
 	log.Printf("Starting HTTP server on %s", httpPort)
