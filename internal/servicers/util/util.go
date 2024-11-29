@@ -63,6 +63,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/auth/signup",
 			"/auth/login",
 			"/auth/code-verification",
+			"liveness/checkliveness",
 		}
 
 		for _, method := range allowedMethods {
