@@ -157,7 +157,7 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = mux.HandlePath("POST", "/api/user-image", userProfileImpl)
+	err = mux.HandlePath("POST", "/api/user-image", userProfileImpl.HandleUserImage)
 	if err != nil {
 		return err
 	}
