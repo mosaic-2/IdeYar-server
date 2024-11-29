@@ -8,6 +8,7 @@ import (
 )
 
 func (s *Server) ChangeEmail(ctx context.Context, in *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
+
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeEmail not implemented")
 }
 func (s *Server) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*pb.ChangePasswordResponse, error) {
