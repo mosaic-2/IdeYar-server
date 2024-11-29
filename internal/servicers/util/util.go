@@ -1,8 +1,10 @@
 package util
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"html/template"
 	"math/rand"
 	"net/smtp"
 	"strconv"
@@ -88,6 +90,25 @@ func SendSignUpEmail(email string, signeUpToken string, code string) {
 		fmt.Println(err)
 		return
 	}
+}
+
+func verificationEmail(code string) (string, error) {
+
+	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
+	if err != nil {
+		return "", err
+	}
+
+	b := new(bytes.Buffer)
+
+	err = tmp.Execute(b, code)
+	if err != nil {
+		return "", err
+	}
+
+	message := string(b.Bytes())
+
+	return message, nil
 }
 
 func GenerateFileName() string {
