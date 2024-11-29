@@ -1,7 +1,7 @@
-package postservice
+package postImpl
 
 import (
-	pb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
+	pb "github.com/mosaic-2/IdeYar-server/pkg/postServicePb"
 )
 
 type Server struct {

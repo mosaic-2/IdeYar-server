@@ -5,7 +5,7 @@ import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
 package IdeYarAPI;
-option go_package = "./../pkg/LivenessService";
+option go_package = "./../pkg/LivenessServicePb";
 
 service Liveness {
   rpc CheckLiveness (google.protobuf.Empty) returns (CheckLivenessResponse) {

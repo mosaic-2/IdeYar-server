@@ -2,11 +2,11 @@
 // source: api/post.proto
 
 /*
-Package postservicepb is a reverse proxy.
+Package postServicePb is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package postservicepb
+package postServicePb
 
 import (
 	"context"

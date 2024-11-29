@@ -1,7 +1,7 @@
-package authservice
+package authImpl
 
 import (
-	pb "github.com/mosaic-2/IdeYar-server/pkg/authservicepb"
+	pb "github.com/mosaic-2/IdeYar-server/pkg/authServicePb"
 )
 
 type Server struct {

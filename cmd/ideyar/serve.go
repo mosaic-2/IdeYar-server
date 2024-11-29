@@ -10,12 +10,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mosaic-2/IdeYar-server/internal/servicers/authservice"
-	"github.com/mosaic-2/IdeYar-server/internal/servicers/postservice"
-	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
-	authservicepb "github.com/mosaic-2/IdeYar-server/pkg/authservicepb"
-	postsrvicepb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
@@ -23,10 +17,16 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/mosaic-2/IdeYar-server/internal/config"
+	"github.com/mosaic-2/IdeYar-server/pkg/LivenessServicePb"
+	"github.com/mosaic-2/IdeYar-server/pkg/UserProfileServicePb"
+	"github.com/mosaic-2/IdeYar-server/pkg/authServicePb"
+	"github.com/mosaic-2/IdeYar-server/pkg/postServicePb"
+
+	authImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/auth"
 	livenessImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/liveness"
+	postImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/post"
 	userProfileImpl "github.com/mosaic-2/IdeYar-server/internal/servicers/user-profile"
-	livenessService "github.com/mosaic-2/IdeYar-server/pkg/LivenessService"
-	"github.com/mosaic-2/IdeYar-server/pkg/UserProfileService"
+	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
 )
 
 var (
@@ -75,27 +75,27 @@ func runGRPCServer() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize liveness server: %w", err)
 	}
-	livenessService.RegisterLivenessServer(grpcServer, livenessServer)
+	LivenessServicePb.RegisterLivenessServer(grpcServer, livenessServer)
 
 	// authentication service
-	authServer, err := authservice.NewServer(secretKey)
+	authServer, err := authImpl.NewServer(secretKey)
 	if err != nil {
 		return fmt.Errorf("failed to initialize auth server: %w", err)
 	}
-	authservicepb.RegisterAuthServer(grpcServer, authServer)
+	authServicePb.RegisterAuthServer(grpcServer, authServer)
 
 	// post service
-	postServer, err := postservice.NewServer(secretKey)
+	postServer, err := postImpl.NewServer(secretKey)
 	if err != nil {
 		return fmt.Errorf("failed to initialize post server: %w", err)
 	}
-	postsrvicepb.RegisterPostServer(grpcServer, postServer)
+	postServicePb.RegisterPostServer(grpcServer, postServer)
 
 	userProfileServer, err := userProfileImpl.NewServer(secretKey)
 	if err != nil {
 		return fmt.Errorf("failed to initialize user profile server: %w", err)
 	}
-	UserProfileService.RegisterUserProfileServer(grpcServer, userProfileServer)
+	UserProfileServicePb.RegisterUserProfileServer(grpcServer, userProfileServer)
 
 	log.Printf("Starting gRPC server on %s", grpcPort)
 	return grpcServer.Serve(lis)
@@ -107,7 +107,7 @@ func runHTTPServer(ctx context.Context) error {
 	)
 
 	// register http services here
-	err := livenessService.RegisterLivenessHandlerFromEndpoint(
+	err := LivenessServicePb.RegisterLivenessHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
@@ -117,7 +117,7 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = authservicepb.RegisterAuthHandlerFromEndpoint(
+	err = authServicePb.RegisterAuthHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
@@ -127,7 +127,7 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = postsrvicepb.RegisterPostHandlerFromEndpoint(
+	err = postServicePb.RegisterPostHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
@@ -137,16 +137,17 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = mux.HandlePath("POST", "/api/post-image", postservice.HandlePostImage)
-	if err != nil {
-		return err
-	}
-	err = mux.HandlePath("GET", "/api/image/{image}", postservice.HandleImage)
+	err = mux.HandlePath("POST", "/api/post-image", postImpl.HandlePostImage)
 	if err != nil {
 		return err
 	}
 
-	err = UserProfileService.RegisterUserProfileHandlerFromEndpoint(
+	err = mux.HandlePath("GET", "/api/image/{image}", postImpl.HandleImage)
+	if err != nil {
+		return err
+	}
+
+	err = UserProfileServicePb.RegisterUserProfileHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
@@ -154,6 +155,11 @@ func runHTTPServer(ctx context.Context) error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
+	}
+
+	err = mux.HandlePath("POST", "/api/user-image", userProfileImpl)
+	if err != nil {
+		return err
 	}
 
 	// Set up CORS middleware

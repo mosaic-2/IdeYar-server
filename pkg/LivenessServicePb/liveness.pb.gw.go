@@ -2,11 +2,11 @@
 // source: api/liveness.proto
 
 /*
-Package LivenessService is a reverse proxy.
+Package LivenessServicePb is a reverse proxy.
 
 It translates gRPC into RESTful JSON APIs.
 */
-package LivenessService
+package LivenessServicePb
 
 import (
 	"context"

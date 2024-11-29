@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/api/annotations.proto";
 
 package IdeYarAPI;
-option go_package = "./../pkg/UserProfileService";
+option go_package = "./../pkg/UserProfileServicePb";
 
 service UserProfile {
   rpc ChangeEmail (ChangeEmailRequest) returns (ChangeEmailResponse) {
@@ -20,8 +20,7 @@ service UserProfile {
   };
   rpc GetProfileInfo (GetProfileInfoRequest) returns (GetProfileInfoResponse) {
     option (google.api.http) = {
-      post: "/user-profile/update-profile"
-      body: "*"
+      get: "/user-profile/get-profile"
     };
   };
   rpc UpdateProfileInfo (UpdateProfileInfoRequest) returns (UpdateProfileInfoResponse) {
@@ -47,18 +46,29 @@ message ChangePasswordRequest {
 message ChangePasswordResponse {
 }
 
-message UpdateProfileInfoRequest {
-  string name = 1;
-  string username = 2;
-  string bio = 3;
+message GetProfileInfoRequest {
 }
 
-message
+message GetProfileInfoResponse {
+  string username = 1;
+  string phone = 2;
+  string bio = 3;
+  string birthday = 4;
+}
+
+
+message UpdateProfileInfoRequest {
+  string username = 1;
+  string phone = 2;
+  string bio = 3;
+  string birthday = 4;
+}
 
 message UpdateProfileInfoResponse {
-  string name = 1;
-  string username = 2;
+  string username = 1;
+  string phone = 2;
   string bio = 3;
+  string birthday = 4;
 }
 
 

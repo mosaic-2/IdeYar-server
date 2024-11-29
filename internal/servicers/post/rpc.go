@@ -1,4 +1,4 @@
-package postservice
+package postImpl
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
 	"github.com/mosaic-2/IdeYar-server/internal/model"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
-	pb "github.com/mosaic-2/IdeYar-server/pkg/postservicepb"
+	pb "github.com/mosaic-2/IdeYar-server/pkg/postServicePb"
 	"github.com/shopspring/decimal"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

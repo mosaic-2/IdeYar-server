@@ -1,4 +1,4 @@
-package postservice
+package postImpl
 
 import (
 	"errors"
