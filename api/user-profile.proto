@@ -18,9 +18,15 @@ service UserProfile {
       body: "*"
     };
   };
+  rpc GetProfileInfo (GetProfileInfoRequest) returns (GetProfileInfoResponse) {
+    option (google.api.http) = {
+      post: "/user-profile/update-profile"
+      body: "*"
+    };
+  };
   rpc UpdateProfileInfo (UpdateProfileInfoRequest) returns (UpdateProfileInfoResponse) {
     option (google.api.http) = {
-      post: "/user-profile/code-verification"
+      post: "/user-profile/update-profile"
       body: "*"
     };
   };
@@ -46,6 +52,8 @@ message UpdateProfileInfoRequest {
   string username = 2;
   string bio = 3;
 }
+
+message
 
 message UpdateProfileInfoResponse {
   string name = 1;

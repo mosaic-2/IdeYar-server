@@ -130,7 +130,7 @@ func SendSignUpEmail(email string, signeUpToken string, code string) {
 	smtpPort := "587"
 
 	// Message.
-	message, err := verificationEmail(fmt.Sprintf("ideyar-app.ir/code-veification/%s/%s", signeUpToken, code))
+	message, err := verificationEmail(fmt.Sprintf("localhost:3000/code-veification/%s/%s", signeUpToken, code))
 	if err != nil {
 		fmt.Println(err)
 		return
