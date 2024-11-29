@@ -23,10 +23,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/auth/login",
 			"/auth/code-verification",
 			"/liveness/checkliveness",
+			"/api/image",
 		}
 
 		for _, method := range allowedMethods {
-			if r.RequestURI == method {
+			if strings.HasPrefix(r.RequestURI, method) {
 				next.ServeHTTP(w, r)
 				return
 			}
