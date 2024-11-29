@@ -1,9 +1,11 @@
 package interceptor
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/mosaic-2/IdeYar-server/internal/config"
+	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
 	"log"
 	"net/http"
 	"strconv"
@@ -62,7 +64,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserIDCtxKey{}, userID)
+		ctx := context.WithValue(r.Context(), util.UserIDCtxKey{}, userID)
 		r = r.WithContext(ctx)
 
 		r.Header.Set("x-user-id", userIDStr)

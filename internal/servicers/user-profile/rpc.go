@@ -10,7 +10,7 @@ import (
 func (s *Server) ChangeEmail(ctx context.Context, in *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeEmail not implemented")
 }
-func (s *Server) ChangePassword(context.Context, *pb.ChangePasswordRequest) (*pb.ChangePasswordResponse, error) {
+func (s *Server) ChangePassword(ctx context.Context, in *pb.ChangePasswordRequest) (*pb.ChangePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
 }
 
@@ -18,6 +18,6 @@ func (s *Server) GetProfileInfo(ctx context.Context, in *pb.GetProfileInfoReques
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileInfo not implemented")
 }
 
-func (s *Server) UpdateProfileInfo(context.Context, *pb.UpdateProfileInfoRequest) (*pb.UpdateProfileInfoResponse, error) {
+func (s *Server) UpdateProfileInfo(ctx context.Context, in *pb.UpdateProfileInfoRequest) (*pb.UpdateProfileInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateProfileInfo not implemented")
 }

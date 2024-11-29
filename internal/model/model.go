@@ -20,11 +20,15 @@ func (SignUp) TableName() string {
 }
 
 type User struct {
-	ID        int64
-	Email     string
-	Username  string
-	Password  string
-	CreatedAt time.Time
+	ID              int64
+	Email           string
+	Username        string
+	Password        string
+	CreatedAt       time.Time
+	Bio             string
+	Birthday        time.Time
+	Phone           string
+	ProfileImageURL string
 }
 
 func (User) TableName() string {
