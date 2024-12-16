@@ -39,7 +39,6 @@ message ChangeEmailResponse {
 }
 
 message ChangePasswordRequest {
-  string oldPassword = 1;
   string newPassword = 2;
 }
 
