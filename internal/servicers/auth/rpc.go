@@ -200,6 +200,7 @@ func (s *Server) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReque
 	}
 
 	token := util.GenerateForgetPassToken()
+	// TODO: get userId from email and store token and userId in db
 
 	go util.SendForgetPasswordEmail(ctx, req.GetEmail(), token)
 
