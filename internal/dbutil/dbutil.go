@@ -74,3 +74,7 @@ func GormDB(ctx context.Context) *gorm.DB {
 	}
 	return db
 }
+
+func WithGormDB(ctx context.Context, db *gorm.DB) context.Context {
+	return context.WithValue(ctx, "gormKey", db)
+}
