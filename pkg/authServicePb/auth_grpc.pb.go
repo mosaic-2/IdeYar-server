@@ -19,9 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Auth_SignUp_FullMethodName           = "/IdeYarAPI.Auth/SignUp"
-	Auth_Login_FullMethodName            = "/IdeYarAPI.Auth/Login"
-	Auth_CodeVerification_FullMethodName = "/IdeYarAPI.Auth/CodeVerification"
+	Auth_SignUp_FullMethodName                 = "/IdeYarAPI.Auth/SignUp"
+	Auth_Login_FullMethodName                  = "/IdeYarAPI.Auth/Login"
+	Auth_CodeVerification_FullMethodName       = "/IdeYarAPI.Auth/CodeVerification"
+	Auth_ForgetPassword_FullMethodName         = "/IdeYarAPI.Auth/ForgetPassword"
+	Auth_ForgetPasswordFinalize_FullMethodName = "/IdeYarAPI.Auth/ForgetPasswordFinalize"
 )
 
 // AuthClient is the client API for Auth service.
@@ -31,6 +33,8 @@ type AuthClient interface {
 	SignUp(ctx context.Context, in *SignUpRequest, opts ...grpc.CallOption) (*SignUpResponse, error)
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	CodeVerification(ctx context.Context, in *CodeVerificationRequest, opts ...grpc.CallOption) (*CodeVerificationResponse, error)
+	ForgetPassword(ctx context.Context, in *ForgetPasswordRequest, opts ...grpc.CallOption) (*ForgetPasswordResponse, error)
+	ForgetPasswordFinalize(ctx context.Context, in *ForgetPasswordFinalizeRequest, opts ...grpc.CallOption) (*ForgetPasswordFinalizeResponse, error)
 }
 
 type authClient struct {
@@ -71,6 +75,26 @@ func (c *authClient) CodeVerification(ctx context.Context, in *CodeVerificationR
 	return out, nil
 }
 
+func (c *authClient) ForgetPassword(ctx context.Context, in *ForgetPasswordRequest, opts ...grpc.CallOption) (*ForgetPasswordResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ForgetPasswordResponse)
+	err := c.cc.Invoke(ctx, Auth_ForgetPassword_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authClient) ForgetPasswordFinalize(ctx context.Context, in *ForgetPasswordFinalizeRequest, opts ...grpc.CallOption) (*ForgetPasswordFinalizeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ForgetPasswordFinalizeResponse)
+	err := c.cc.Invoke(ctx, Auth_ForgetPasswordFinalize_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServer is the server API for Auth service.
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type AuthServer interface {
 	SignUp(context.Context, *SignUpRequest) (*SignUpResponse, error)
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	CodeVerification(context.Context, *CodeVerificationRequest) (*CodeVerificationResponse, error)
+	ForgetPassword(context.Context, *ForgetPasswordRequest) (*ForgetPasswordResponse, error)
+	ForgetPasswordFinalize(context.Context, *ForgetPasswordFinalizeRequest) (*ForgetPasswordFinalizeResponse, error)
 	mustEmbedUnimplementedAuthServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedAuthServer) Login(context.Context, *LoginRequest) (*LoginResp
 }
 func (UnimplementedAuthServer) CodeVerification(context.Context, *CodeVerificationRequest) (*CodeVerificationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CodeVerification not implemented")
+}
+func (UnimplementedAuthServer) ForgetPassword(context.Context, *ForgetPasswordRequest) (*ForgetPasswordResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ForgetPassword not implemented")
+}
+func (UnimplementedAuthServer) ForgetPasswordFinalize(context.Context, *ForgetPasswordFinalizeRequest) (*ForgetPasswordFinalizeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ForgetPasswordFinalize not implemented")
 }
 func (UnimplementedAuthServer) mustEmbedUnimplementedAuthServer() {}
 func (UnimplementedAuthServer) testEmbeddedByValue()              {}
@@ -172,6 +204,42 @@ func _Auth_CodeVerification_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auth_ForgetPassword_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForgetPasswordRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).ForgetPassword(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_ForgetPassword_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).ForgetPassword(ctx, req.(*ForgetPasswordRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Auth_ForgetPasswordFinalize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ForgetPasswordFinalizeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServer).ForgetPasswordFinalize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Auth_ForgetPasswordFinalize_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServer).ForgetPasswordFinalize(ctx, req.(*ForgetPasswordFinalizeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auth_ServiceDesc is the grpc.ServiceDesc for Auth service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var Auth_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CodeVerification",
 			Handler:    _Auth_CodeVerification_Handler,
+		},
+		{
+			MethodName: "ForgetPassword",
+			Handler:    _Auth_ForgetPassword_Handler,
+		},
+		{
+			MethodName: "ForgetPasswordFinalize",
+			Handler:    _Auth_ForgetPasswordFinalize_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

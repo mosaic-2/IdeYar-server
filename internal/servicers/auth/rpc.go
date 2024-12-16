@@ -194,6 +194,42 @@ func (s *Server) CodeVerification(ctx context.Context, req *pb.CodeVerificationR
 	return &pb.CodeVerificationResponse{}, nil
 }
 
+func (s *Server) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordRequest) (*pb.ForgetPasswordResponse, error) {
+	if !util.ValidateEmail(req.GetEmail()) {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid Email")
+	}
+
+	token := util.GenerateForgetPassToken()
+
+	go util.SendForgetPasswordEmail(ctx, req.GetEmail(), token)
+
+	return &pb.ForgetPasswordResponse{}, nil
+}
+
+func (s *Server) ForgetPasswordFinalize(ctx context.Context, req *pb.ForgetPasswordFinalizeRequest) (*pb.ForgetPasswordFinalizeResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	// TODO: get userId from token in db
+	userID := util.GetUserIDFromCtx(ctx)
+
+	newPassword := req.GetNewPassword()
+	if !util.ValidatePassword(newPassword) {
+		return nil, status.Errorf(codes.InvalidArgument, "password must be at least 8 characters long")
+	}
+	bcryptNewPass, err := bcrypt.GenerateFromPassword([]byte(newPassword), 10)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error hashing password")
+	}
+
+	if err := db.Model(&model.User{}).Where(
+		"id = ?", userID,
+	).Update("password", string(bcryptNewPass)).Error; err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to update password: %v", err)
+	}
+
+	return &pb.ForgetPasswordFinalizeResponse{}, nil
+}
+
 func checkSignUpPreconditions(req *pb.SignUpRequest, db *gorm.DB) error {
 	if !util.ValidateEmail(req.GetEmail()) {
 		return status.Errorf(codes.InvalidArgument, "invalid email")
