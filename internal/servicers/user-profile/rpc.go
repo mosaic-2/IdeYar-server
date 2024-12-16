@@ -37,12 +37,6 @@ func (s *Server) ChangePassword(ctx context.Context, in *pb.ChangePasswordReques
 
 	userID := util.GetUserIDFromCtx(ctx)
 
-	oldPassword := in.GetOldPassword()
-	bcryptOldPass, err := bcrypt.GenerateFromPassword([]byte(oldPassword), 10)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error hashing password")
-	}
-
 	newPassword := in.GetNewPassword()
 	if !util.ValidatePassword(newPassword) {
 		return nil, status.Errorf(codes.InvalidArgument, "password must be at least 8 characters long")
@@ -53,7 +47,7 @@ func (s *Server) ChangePassword(ctx context.Context, in *pb.ChangePasswordReques
 	}
 
 	if err := db.Model(&model.User{}).Where(
-		"id = ? AND password = ?", userID, string(bcryptOldPass),
+		"id = ?", userID,
 	).Update("password", string(bcryptNewPass)).Error; err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to update password: %v", err)
 	}
