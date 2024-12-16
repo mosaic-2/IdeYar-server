@@ -8,3 +8,5 @@ CREATE TABLE IF NOT EXISTS post_detail (
 	FOREIGN KEY (post_id)
 		REFERENCES post(id)
 );
+
+CREATE INDEX idx_post_id ON post_detail(post_id);

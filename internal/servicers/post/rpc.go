@@ -11,6 +11,7 @@ import (
 	"github.com/shopspring/decimal"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 )
 
@@ -105,6 +106,56 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		PostDetails: postDetailsPb,
 	}, nil
 
+}
+
+func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb.SearchPostResponse, error) {
+
+	db := dbutil.GormDB(ctx)
+
+	title := req.GetTitle()
+	offset := req.GetPage() * 20
+
+	result := []*pb.PostOverview{}
+
+	err := db.Raw(`
+		SELECT p.title, pd.image
+		FROM post p LEFT JOIN (
+			SELECT pd.post_id, pd.image 
+			FROM post_detail pd
+			WHERE pd.order_c = 0
+		) AS pd ON p.id = pd.post_id
+		ORDER BY SIMILARITY(p.title, ?) DESC
+		LIMIT 20 
+		OFFSET ?
+	`, title, offset).
+		Scan(&result).Error
+	if err != nil {
+		return nil, status.Error(codes.Internal, "error while retreiving posts")
+	}
+
+	return &pb.SearchPostResponse{
+		PostOverview: result,
+	}, nil
+}
+
+func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.LandingPostsResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	result := []*pb.LandingPost{}
+
+	err := db.Raw(`
+		SELECT p.title, pd.image, p.fund_raised, p.minimum_fund
+		FROM post p LEFT JOIN post_detail pd ON p.id = pd.post_id
+		WHERE order_c = 0
+		ORDER BY RANDOM()
+	`).Scan(&result).Error
+	if err != nil {
+		return nil, status.Error(codes.Internal, "error while retreiving posts")
+	}
+
+	return &pb.LandingPostsResponse{
+		LandingPosts: result,
+	}, nil
 }
 
 func toPostCreatePayload(req *pb.CreateRequest, userID int64) (*model.Post, []*model.PostDetail, error) {

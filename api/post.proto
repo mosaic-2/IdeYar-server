@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
 
 package IdeYarAPI;
 option go_package = "./../pkg/postServicePb";
@@ -17,6 +18,42 @@ service Post {
             get: "/api/post/{id}"
         };
     };
+    rpc SearchPost(SearchPostRequest) returns (SearchPostResponse){
+        option (google.api.http) = {
+            post: "/api/search-post"
+            body: "*"
+        };
+    };
+    rpc LandingPosts(google.protobuf.Empty) returns (LandingPostsResponse){
+        option (google.api.http) = {
+          get: "/api/landing-posts"  
+        };
+    };
+}
+
+message LandingPost {
+    string title = 1;
+    string image = 2;
+    string fund_raised = 3;
+    string minimum_fund = 4;
+}
+
+message LandingPostsResponse {
+    repeated LandingPost landing_posts = 1;
+}
+
+message SearchPostRequest {
+    string title = 1;
+    int32 page = 2;
+}
+
+message SearchPostResponse {
+    repeated PostOverview post_overview = 1;
+}
+
+message PostOverview {
+    string title = 1;
+    string image = 2;
 }
 
 message CreateRequest {

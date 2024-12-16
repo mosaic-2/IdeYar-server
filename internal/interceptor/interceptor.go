@@ -3,13 +3,14 @@ package interceptor
 import (
 	"context"
 	"fmt"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/mosaic-2/IdeYar-server/internal/config"
-	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/mosaic-2/IdeYar-server/internal/config"
+	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -24,6 +25,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/auth/code-verification",
 			"/liveness/checkliveness",
 			"/api/image",
+			"/api/landing-posts",
+			"/api/search-post",
 		}
 
 		for _, method := range allowedMethods {
