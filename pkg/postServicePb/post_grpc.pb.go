@@ -20,10 +20,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Post_Create_FullMethodName       = "/IdeYarAPI.Post/Create"
-	Post_GetPost_FullMethodName      = "/IdeYarAPI.Post/GetPost"
-	Post_SearchPost_FullMethodName   = "/IdeYarAPI.Post/SearchPost"
-	Post_LandingPosts_FullMethodName = "/IdeYarAPI.Post/LandingPosts"
+	Post_Create_FullMethodName         = "/IdeYarAPI.Post/Create"
+	Post_GetPost_FullMethodName        = "/IdeYarAPI.Post/GetPost"
+	Post_SearchPost_FullMethodName     = "/IdeYarAPI.Post/SearchPost"
+	Post_LandingPosts_FullMethodName   = "/IdeYarAPI.Post/LandingPosts"
+	Post_FundPost_FullMethodName       = "/IdeYarAPI.Post/FundPost"
+	Post_UserFunds_FullMethodName      = "/IdeYarAPI.Post/UserFunds"
+	Post_UserProjects_FullMethodName   = "/IdeYarAPI.Post/UserProjects"
+	Post_UserIDProjects_FullMethodName = "/IdeYarAPI.Post/UserIDProjects"
 )
 
 // PostClient is the client API for Post service.
@@ -34,6 +38,10 @@ type PostClient interface {
 	GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error)
 	SearchPost(ctx context.Context, in *SearchPostRequest, opts ...grpc.CallOption) (*SearchPostResponse, error)
 	LandingPosts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LandingPostsResponse, error)
+	FundPost(ctx context.Context, in *FundPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UserFunds(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserFundsResponse, error)
+	UserProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserProjectsResponse, error)
+	UserIDProjects(ctx context.Context, in *UserIDProjectsRequest, opts ...grpc.CallOption) (*UserProjectsResponse, error)
 }
 
 type postClient struct {
@@ -84,6 +92,46 @@ func (c *postClient) LandingPosts(ctx context.Context, in *emptypb.Empty, opts .
 	return out, nil
 }
 
+func (c *postClient) FundPost(ctx context.Context, in *FundPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, Post_FundPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postClient) UserFunds(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserFundsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserFundsResponse)
+	err := c.cc.Invoke(ctx, Post_UserFunds_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postClient) UserProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserProjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserProjectsResponse)
+	err := c.cc.Invoke(ctx, Post_UserProjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postClient) UserIDProjects(ctx context.Context, in *UserIDProjectsRequest, opts ...grpc.CallOption) (*UserProjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserProjectsResponse)
+	err := c.cc.Invoke(ctx, Post_UserIDProjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServer is the server API for Post service.
 // All implementations must embed UnimplementedPostServer
 // for forward compatibility.
@@ -92,6 +140,10 @@ type PostServer interface {
 	GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error)
 	SearchPost(context.Context, *SearchPostRequest) (*SearchPostResponse, error)
 	LandingPosts(context.Context, *emptypb.Empty) (*LandingPostsResponse, error)
+	FundPost(context.Context, *FundPostRequest) (*emptypb.Empty, error)
+	UserFunds(context.Context, *emptypb.Empty) (*UserFundsResponse, error)
+	UserProjects(context.Context, *emptypb.Empty) (*UserProjectsResponse, error)
+	UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error)
 	mustEmbedUnimplementedPostServer()
 }
 
@@ -113,6 +165,18 @@ func (UnimplementedPostServer) SearchPost(context.Context, *SearchPostRequest) (
 }
 func (UnimplementedPostServer) LandingPosts(context.Context, *emptypb.Empty) (*LandingPostsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LandingPosts not implemented")
+}
+func (UnimplementedPostServer) FundPost(context.Context, *FundPostRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FundPost not implemented")
+}
+func (UnimplementedPostServer) UserFunds(context.Context, *emptypb.Empty) (*UserFundsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserFunds not implemented")
+}
+func (UnimplementedPostServer) UserProjects(context.Context, *emptypb.Empty) (*UserProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserProjects not implemented")
+}
+func (UnimplementedPostServer) UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserIDProjects not implemented")
 }
 func (UnimplementedPostServer) mustEmbedUnimplementedPostServer() {}
 func (UnimplementedPostServer) testEmbeddedByValue()              {}
@@ -207,6 +271,78 @@ func _Post_LandingPosts_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Post_FundPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FundPostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServer).FundPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Post_FundPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServer).FundPost(ctx, req.(*FundPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Post_UserFunds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServer).UserFunds(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Post_UserFunds_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServer).UserFunds(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Post_UserProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServer).UserProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Post_UserProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServer).UserProjects(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Post_UserIDProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserIDProjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServer).UserIDProjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Post_UserIDProjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServer).UserIDProjects(ctx, req.(*UserIDProjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Post_ServiceDesc is the grpc.ServiceDesc for Post service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -229,6 +365,22 @@ var Post_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LandingPosts",
 			Handler:    _Post_LandingPosts_Handler,
+		},
+		{
+			MethodName: "FundPost",
+			Handler:    _Post_FundPost_Handler,
+		},
+		{
+			MethodName: "UserFunds",
+			Handler:    _Post_UserFunds_Handler,
+		},
+		{
+			MethodName: "UserProjects",
+			Handler:    _Post_UserProjects_Handler,
+		},
+		{
+			MethodName: "UserIDProjects",
+			Handler:    _Post_UserIDProjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

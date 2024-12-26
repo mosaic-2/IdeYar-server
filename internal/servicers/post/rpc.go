@@ -118,7 +118,7 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	result := []*pb.PostOverview{}
 
 	err := db.Raw(`
-		SELECT p.title, pd.image
+		SELECT p.id, p.title, pd.image
 		FROM post p LEFT JOIN (
 			SELECT pd.post_id, pd.image 
 			FROM post_detail pd
@@ -144,7 +144,7 @@ func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.Landi
 	result := []*pb.LandingPost{}
 
 	err := db.Raw(`
-		SELECT p.title, pd.image, p.fund_raised, p.minimum_fund
+		SELECT p.id, p.title, pd.image, p.fund_raised, p.minimum_fund
 		FROM post p LEFT JOIN post_detail pd ON p.id = pd.post_id
 		WHERE order_c = 0
 		ORDER BY RANDOM()
@@ -156,6 +156,80 @@ func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.Landi
 	return &pb.LandingPostsResponse{
 		LandingPosts: result,
 	}, nil
+}
+
+func (s *Server) FundPost(ctx context.Context, req *pb.FundPostRequest) (*emptypb.Empty, error) {
+
+	db := dbutil.GormDB(ctx)
+
+	postID := req.GetPostId()
+
+	userID := util.GetUserIDFromCtx(ctx)
+
+	amount, err := decimal.NewFromString(req.GetAmount())
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	fund := model.Fund{
+		UserID: userID,
+		PostID: postID,
+		Amount: amount,
+	}
+
+	err = db.Create(fund).Error
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func UserFunds(ctx context.Context, req *emptypb.Empty) (*pb.UserFundsResponse, error) {
+
+	db := dbutil.GormDB(ctx)
+
+	userID := util.GetUserIDFromCtx(ctx)
+
+	userFunds := []*pb.PostOverview{}
+
+	err := db.Table("fund AS f").
+		Joins("JOIN post p ON f.post_id = p.id").
+		Joins("JOIN post_detail pd ON p.id = pd.post_id").
+		Where("f.user_id = ? AND pd.order = 0", userID).
+		Select("p.id, p.title, pd.image").
+		Scan(&userFunds).Error
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &pb.UserFundsResponse{PostOverview: userFunds}, nil
+}
+
+func (s *Server) UserProjects(ctx context.Context, req *emptypb.Empty) (*pb.UserProjectsResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	userID := util.GetUserIDFromCtx(ctx)
+
+	userProjects, err := fetchUserIDProjects(userID, db)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &pb.UserProjectsResponse{PostOverview: userProjects}, nil
+}
+
+func (s *Server) UserIDProjects(ctx context.Context, req *pb.UserIDProjectsRequest) (*pb.UserProjectsResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	userID := req.GetId()
+
+	userProjects, err := fetchUserIDProjects(userID, db)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &pb.UserProjectsResponse{PostOverview: userProjects}, nil
 }
 
 func toPostCreatePayload(req *pb.CreateRequest, userID int64) (*model.Post, []*model.PostDetail, error) {
@@ -191,4 +265,20 @@ func validatePost(post *model.Post) error {
 	}
 
 	return nil
+}
+
+func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.PostOverview, error) {
+
+	userProjects := []*pb.PostOverview{}
+
+	err := tx.Table("post AS p").
+		Joins("JOIN post_detail pd ON p.id = pd.post_id").
+		Where("p.user_id = ? AND pd.order = 0", userID).
+		Select("p.id, p.title, pd.image").
+		Scan(&userProjects).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return userProjects, nil
 }

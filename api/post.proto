@@ -29,13 +29,34 @@ service Post {
           get: "/api/landing-posts"  
         };
     };
+    rpc FundPost(FundPostRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            get: "/api/fund-post/{post_id}"
+        };
+    }
+    rpc UserFunds(google.protobuf.Empty) returns (UserFundsResponse) {
+        option (google.api.http) = {
+            get: "/api/user-funds"
+        };  
+    }
+    rpc UserProjects(google.protobuf.Empty) returns (UserProjectsResponse) {
+        option (google.api.http) = {
+            get: "/api/user-projects"
+        };  
+    }
+    rpc UserIDProjects(UserIDProjectsRequest) returns (UserProjectsResponse) {
+        option (google.api.http) = {
+            get: "/api/user-projects/{id}"
+        };  
+    }
 }
 
 message LandingPost {
-    string title = 1;
-    string image = 2;
-    string fund_raised = 3;
-    string minimum_fund = 4;
+    int64 id = 1;
+    string title = 2;
+    string image = 3;
+    string fund_raised = 4;
+    string minimum_fund = 5;
 }
 
 message LandingPostsResponse {
@@ -52,8 +73,9 @@ message SearchPostResponse {
 }
 
 message PostOverview {
-    string title = 1;
-    string image = 2;
+    int64 id = 1;
+    string title = 2;
+    string image = 3;
 }
 
 message CreateRequest {
@@ -83,4 +105,21 @@ message GetPostResponse {
     string minimum_fund = 3;
     string fund_raised = 4;
     repeated PostDetail post_details = 5;
+}
+
+message FundPostRequest {
+    int64 post_id = 1;
+    string amount = 2;
+}
+
+message UserFundsResponse {
+    repeated PostOverview post_overview = 1;
+}
+
+message UserProjectsResponse {
+    repeated PostOverview post_overview = 1;
+}
+
+message UserIDProjectsRequest {
+    int64 id = 1;
 }

@@ -59,3 +59,10 @@ type PostDetail struct {
 func (PostDetail) TableName() string {
 	return "post_detail"
 }
+
+type Fund struct {
+	ID     int64
+	UserID int64
+	PostID int64
+	Amount decimal.Decimal
+}
