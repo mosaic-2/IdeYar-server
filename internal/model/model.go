@@ -36,11 +36,13 @@ func (User) TableName() string {
 }
 
 type Post struct {
-	ID          int64
-	Title       string
-	UserID      int64
-	MinimumFund decimal.Decimal
-	FundRaised  decimal.Decimal
+	ID           int64
+	Title        string
+	UserID       int64
+	MinimumFund  decimal.Decimal
+	FundRaised   decimal.Decimal
+	DeadlineDate time.Time
+	CreatedAt    time.Time
 }
 
 func (Post) TableName() string {

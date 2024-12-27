@@ -2,12 +2,13 @@ syntax = "proto3";
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 package IdeYarAPI;
 option go_package = "./../pkg/postServicePb";
 
 service Post {
-    rpc Create(CreateRequest) returns (CreateResponse){
+    rpc CreatePost(CreatePostRequest) returns (CreatePostResponse){
         option (google.api.http) = {
             post: "/api/post"
             body: "*"
@@ -31,7 +32,8 @@ service Post {
     };
     rpc FundPost(FundPostRequest) returns (google.protobuf.Empty) {
         option (google.api.http) = {
-            get: "/api/fund-post/{post_id}"
+            post: "/api/fund-post/{post_id}"
+            body: "*"
         };
     }
     rpc UserFunds(google.protobuf.Empty) returns (UserFundsResponse) {
@@ -78,13 +80,21 @@ message PostOverview {
     string image = 3;
 }
 
-message CreateRequest {
-    string title = 1;
-    string minimum_fund = 2;
-    repeated PostDetail post_details = 3;
+message FundOverview {
+    int64 id = 1;
+    string title = 2;
+    string image = 3;
+    string amount = 4;
 }
 
-message CreateResponse {
+message CreatePostRequest {
+    string title = 1;
+    string minimum_fund = 2;
+    string deadline_date = 3;
+    repeated PostDetail post_details = 4;
+}
+
+message CreatePostResponse {
     int64 id = 1;
 }
 
@@ -104,7 +114,9 @@ message GetPostResponse {
     string title = 2;
     string minimum_fund = 3;
     string fund_raised = 4;
-    repeated PostDetail post_details = 5;
+    string deadline_date = 5;
+    google.protobuf.Timestamp created_at = 6;
+    repeated PostDetail post_details = 7;
 }
 
 message FundPostRequest {
@@ -113,7 +125,7 @@ message FundPostRequest {
 }
 
 message UserFundsResponse {
-    repeated PostOverview post_overview = 1;
+    repeated FundOverview fund_overview = 1;
 }
 
 message UserProjectsResponse {
