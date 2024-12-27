@@ -24,6 +24,7 @@ services:
       - DB_NAME=$DB_NAME
       - DB_LOG=$DB_LOG
       - SECRET_KEY=$SECRET_KEY
+      - MAIL_PASS=$MAIL_PASS
     restart: always
 volumes:
   postgres_data:
