@@ -74,6 +74,7 @@ func (s *Server) GetProfileInfo(ctx context.Context, in *pb.GetProfileInfoReques
 		Bio:             user.Bio,
 		Birthday:        user.Birthday.Format("2006-01-02"),
 		ProfileImageUrl: user.ProfileImageURL,
+		Email:           user.Email,
 	}
 
 	return &response, nil
