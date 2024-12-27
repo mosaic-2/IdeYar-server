@@ -29,17 +29,37 @@ func (s *Server) ChangeEmail(ctx context.Context, in *pb.ChangeEmailRequest) (*p
 		return nil, status.Errorf(codes.Internal, "failed to update email: %v", err)
 	}
 
-	var user model.User
-	if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Errorf(codes.NotFound, "user not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to retrieve user profile: %v", err)
+	token, err := util.CreateChangeMailToken(userID, email, time.Minute*30, s.hmacSecret)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "faild to create token: %v", err)
 	}
 
-	//oldMail := user.Email
-	//
-	//util.get
+	go util.SendChangeMailEmail(ctx, email, token)
+
+	return &pb.ChangeEmailResponse{}, nil
+}
+
+func (s *Server) ChangeEmailConfirm(ctx context.Context, in *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	userID := util.GetUserIDFromCtx(ctx)
+
+	email := in.GetEmail()
+	if !util.ValidateEmail(email) {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %s", email)
+	}
+
+	// Directly update the user's email in the database
+	if err := db.Model(&model.User{}).Where("id = ?", userID).Update("email", email).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to update email: %v", err)
+	}
+
+	token, err := util.CreateChangeMailToken(userID, email, time.Minute*30, s.hmacSecret)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "faild to create token: %v", err)
+	}
+
+	util.SendChangeMailEmail(ctx, email, token)
 
 	return &pb.ChangeEmailResponse{}, nil
 }
