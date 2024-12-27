@@ -32,7 +32,7 @@ func GenerateVerificationCode() string {
 func CreateLoginToken(userID string, duration time.Duration, key []byte) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
-		Issuer:    "KhanWeb",
+		Issuer:    "IdeYar",
 		Subject:   userID,
 		Audience:  jwt.ClaimStrings{"Login"},
 	})
@@ -43,7 +43,18 @@ func CreateLoginToken(userID string, duration time.Duration, key []byte) (string
 func CreateRefreshToken(userID string, duration time.Duration, key []byte) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
-		Issuer:    "KhanWeb",
+		Issuer:    "IdeYar",
+		Subject:   userID,
+		Audience:  jwt.ClaimStrings{"Refresh"},
+	})
+
+	return token.SignedString(key)
+}
+
+func CreateChangeMailToken(userID string, old string, new string, duration time.Duration, key []byte) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
+		Issuer:    "IdeYar",
 		Subject:   userID,
 		Audience:  jwt.ClaimStrings{"Refresh"},
 	})
@@ -72,6 +83,8 @@ func SendSignUpEmail(email string, signeUpToken string, code string) {
 		fmt.Println(err)
 		return
 	}
+
+	fmt.Printf("SignUp link:\n localhost:3000/code-veification/%s/%s", signeUpToken, code)
 
 	mimeHeaders := "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n"
 

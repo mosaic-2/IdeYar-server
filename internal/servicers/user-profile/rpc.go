@@ -29,6 +29,18 @@ func (s *Server) ChangeEmail(ctx context.Context, in *pb.ChangeEmailRequest) (*p
 		return nil, status.Errorf(codes.Internal, "failed to update email: %v", err)
 	}
 
+	var user model.User
+	if err := db.Where("id = ?", userID).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "failed to retrieve user profile: %v", err)
+	}
+
+	//oldMail := user.Email
+	//
+	//util.get
+
 	return &pb.ChangeEmailResponse{}, nil
 }
 
