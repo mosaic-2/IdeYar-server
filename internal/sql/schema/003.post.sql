@@ -3,5 +3,9 @@ CREATE TABLE IF NOT EXISTS post (
 	title VARCHAR(255) NOT NULL,
 	user_id BIGINT NOT NULL,
 	minimum_fund DECIMAL(28, 6) NOT NULL,
-	fund_raised DECIMAL(28, 6) NOT NULL DEFAULT 0
+	fund_raised DECIMAL(28, 6) NOT NULL DEFAULT 0,
+	deadline_date DATE NOT NULL,
+	created_at TIMESTAMPTZ,
+	FOREIGN KEY (user_id)
+		REFERENCES user_t(id)
 );
