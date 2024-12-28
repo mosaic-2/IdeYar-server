@@ -41,7 +41,7 @@ func SendEmail(to []string, subject, messageBody string) error {
 
 func SendSignUpEmail(email, signUpToken, code string) {
 	link := fmt.Sprintf("http://localhost:3000/code-verification/%s/%s", signUpToken, code)
-	messageBody, err := verificationEmail(link)
+	messageBody, err := LoadVerificationEmail(link)
 	if err != nil {
 		log.Println("Error creating email message:", err)
 		return
@@ -55,7 +55,7 @@ func SendSignUpEmail(email, signUpToken, code string) {
 
 func SendForgetPasswordEmail(ctx context.Context, email, token string) {
 	link := fmt.Sprintf("http://localhost:3000/forget-password/%s", token)
-	messageBody, err := verificationEmail(link)
+	messageBody, err := LoadForgetPasswordEmail(link)
 	if err != nil {
 		log.Println("Error creating email message:", err)
 		return
@@ -69,7 +69,7 @@ func SendForgetPasswordEmail(ctx context.Context, email, token string) {
 
 func SendChangeMailEmail(ctx context.Context, email, token string) {
 	link := fmt.Sprintf("http://localhost:3000/change-email/%s", token)
-	messageBody, err := verificationEmail(link)
+	messageBody, err := LoadChangeMailEmail(link)
 	if err != nil {
 		log.Println("Error creating email message:", err)
 		return

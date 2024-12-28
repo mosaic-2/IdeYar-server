@@ -1,9 +1,11 @@
 package util
 
 import (
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"math/rand/v2"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -16,6 +18,21 @@ func CreateLoginToken(userID string, duration time.Duration, key []byte) (string
 	})
 
 	return token.SignedString(key)
+}
+
+func ParseLoginToken(bearerToken string, hmacSecret []byte) (string, error) {
+	token, err := jwt.Parse(bearerToken, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return hmacSecret, nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return token.Claims.GetSubject()
 }
 
 func CreateRefreshToken(userID string, duration time.Duration, key []byte) (string, error) {
@@ -38,6 +55,33 @@ func CreateChangeMailToken(userID int64, newMail string, duration time.Duration,
 	})
 
 	return token.SignedString(key)
+}
+
+func ParseChangeMailToken(token string, hmacSecret []byte) (userID int64, newMail string, err error) {
+	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return hmacSecret, nil
+	})
+	if err != nil {
+		return 0, "", err
+	}
+
+	joinedStr, err := jwtToken.Claims.GetSubject()
+	if err != nil {
+		return 0, "", err
+	}
+
+	strArray := strings.Split(joinedStr, "$")
+
+	userID, err = strconv.ParseInt(strArray[0], 10, 64)
+	if err != nil {
+		return 0, "", err
+	}
+
+	return userID, strArray[1], nil
 }
 
 func GenerateForgetPassToken() string {

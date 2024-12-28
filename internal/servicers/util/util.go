@@ -24,7 +24,45 @@ func GenerateVerificationCode() string {
 	return string(b)
 }
 
-func verificationEmail(code string) (string, error) {
+func LoadVerificationEmail(code string) (string, error) {
+
+	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
+	if err != nil {
+		return "", err
+	}
+
+	b := new(bytes.Buffer)
+
+	err = tmp.Execute(b, code)
+	if err != nil {
+		return "", err
+	}
+
+	message := string(b.Bytes())
+
+	return message, nil
+}
+
+func LoadChangeMailEmail(code string) (string, error) {
+
+	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
+	if err != nil {
+		return "", err
+	}
+
+	b := new(bytes.Buffer)
+
+	err = tmp.Execute(b, code)
+	if err != nil {
+		return "", err
+	}
+
+	message := string(b.Bytes())
+
+	return message, nil
+}
+
+func LoadForgetPasswordEmail(code string) (string, error) {
 
 	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
 	if err != nil {
