@@ -2,13 +2,11 @@ package interceptor
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/mosaic-2/IdeYar-server/internal/config"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
 )
@@ -46,20 +44,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse(bearerToken, func(token *jwt.Token) (interface{}, error) {
-			// Don't forget to validate the alg is what you expect:
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return hmacSecret, nil
-		})
+		userIDStr, err := util.ParseLoginToken(bearerToken, hmacSecret)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		userIDStr, err := token.Claims.GetSubject()
-		if err != nil {
 			return
 		}
 

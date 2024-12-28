@@ -1,8 +1,10 @@
 package util
 
 import (
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"math/rand/v2"
+	"net/http"
 	"strconv"
 	"time"
 )
@@ -16,6 +18,21 @@ func CreateLoginToken(userID string, duration time.Duration, key []byte) (string
 	})
 
 	return token.SignedString(key)
+}
+
+func ParseLoginToken(bearerToken string, hmacSecret []byte) (string, error) {
+	token, err := jwt.Parse(bearerToken, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return hmacSecret, nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return token.Claims.GetSubject()
 }
 
 func CreateRefreshToken(userID string, duration time.Duration, key []byte) (string, error) {
@@ -38,6 +55,10 @@ func CreateChangeMailToken(userID int64, newMail string, duration time.Duration,
 	})
 
 	return token.SignedString(key)
+}
+
+func ParseChangeMailToken(token string) (userID int64, newMail string, err error) {
+
 }
 
 func GenerateForgetPassToken() string {
