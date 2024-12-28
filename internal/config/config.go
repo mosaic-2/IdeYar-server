@@ -48,5 +48,5 @@ func GetMailPass() string {
 }
 
 func GetMailUsername() string {
-	return "mmdhossein.haghdadi@gmail.com"
+	return "73470b001@smtp-brevo.com"
 }

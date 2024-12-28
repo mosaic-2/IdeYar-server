@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	username = config.GetMailPass()
+	username = config.GetMailUsername()
 	password = config.GetMailPass()
 }
 
