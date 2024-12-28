@@ -3,7 +3,6 @@ package util
 import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
-	"math/rand/v2"
 	"strconv"
 	"strings"
 	"time"
@@ -84,14 +83,30 @@ func ParseChangeMailToken(token string, hmacSecret []byte) (userID int64, newMai
 	return userID, strArray[1], nil
 }
 
-func GenerateForgetPassToken() string {
-	const charset = `ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`
-	//const charset = `0123456789`
-	//for front test
-	const codeLen = 20
-	b := make([]byte, codeLen)
-	for i := 0; i < codeLen; i++ {
-		b[i] = charset[rand.Int()%len(charset)]
+func CreateForgetPassToken(mail string, duration time.Duration, key []byte) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
+		Issuer:    "IdeYar",
+		Subject:   mail,
+		Audience:  jwt.ClaimStrings{"ForgetPassword"},
+	})
+
+	return token.SignedString(key)
+
+}
+
+func ParseForgetPassToken(token string, key []byte) (string, error) {
+	jwToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return key, nil
+	})
+	if err != nil {
+		return "", err
 	}
-	return string(b)
+
+	return jwToken.Claims.GetSubject()
+
 }
