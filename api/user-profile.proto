@@ -11,6 +11,12 @@ service UserProfile {
       post: "/user-profile/change-email"
       body: "*"
     };
+  };
+  rpc ChangeEmailConfirm (ChangeEmailConfirmRequest) returns (ChangeEmailConfirmResponse) {
+    option (google.api.http) = {
+      post: "/user-profile/change-email-confirm"
+      body: "*"
+    };
   }
   rpc ChangePassword (ChangePasswordRequest) returns (ChangePasswordResponse) {
     option (google.api.http) = {
@@ -36,6 +42,13 @@ message ChangeEmailRequest {
 }
 
 message ChangeEmailResponse {
+}
+
+message ChangeEmailConfirmRequest {
+  string token = 1;
+}
+
+message ChangeEmailConfirmResponse {
 }
 
 message ChangePasswordRequest {

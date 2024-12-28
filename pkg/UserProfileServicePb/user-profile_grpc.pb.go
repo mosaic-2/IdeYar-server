@@ -19,10 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserProfile_ChangeEmail_FullMethodName       = "/IdeYarAPI.UserProfile/ChangeEmail"
-	UserProfile_ChangePassword_FullMethodName    = "/IdeYarAPI.UserProfile/ChangePassword"
-	UserProfile_GetProfileInfo_FullMethodName    = "/IdeYarAPI.UserProfile/GetProfileInfo"
-	UserProfile_UpdateProfileInfo_FullMethodName = "/IdeYarAPI.UserProfile/UpdateProfileInfo"
+	UserProfile_ChangeEmail_FullMethodName        = "/IdeYarAPI.UserProfile/ChangeEmail"
+	UserProfile_ChangeEmailConfirm_FullMethodName = "/IdeYarAPI.UserProfile/ChangeEmailConfirm"
+	UserProfile_ChangePassword_FullMethodName     = "/IdeYarAPI.UserProfile/ChangePassword"
+	UserProfile_GetProfileInfo_FullMethodName     = "/IdeYarAPI.UserProfile/GetProfileInfo"
+	UserProfile_UpdateProfileInfo_FullMethodName  = "/IdeYarAPI.UserProfile/UpdateProfileInfo"
 )
 
 // UserProfileClient is the client API for UserProfile service.
@@ -30,6 +31,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserProfileClient interface {
 	ChangeEmail(ctx context.Context, in *ChangeEmailRequest, opts ...grpc.CallOption) (*ChangeEmailResponse, error)
+	ChangeEmailConfirm(ctx context.Context, in *ChangeEmailConfirmRequest, opts ...grpc.CallOption) (*ChangeEmailConfirmResponse, error)
 	ChangePassword(ctx context.Context, in *ChangePasswordRequest, opts ...grpc.CallOption) (*ChangePasswordResponse, error)
 	GetProfileInfo(ctx context.Context, in *GetProfileInfoRequest, opts ...grpc.CallOption) (*GetProfileInfoResponse, error)
 	UpdateProfileInfo(ctx context.Context, in *UpdateProfileInfoRequest, opts ...grpc.CallOption) (*UpdateProfileInfoResponse, error)
@@ -47,6 +49,16 @@ func (c *userProfileClient) ChangeEmail(ctx context.Context, in *ChangeEmailRequ
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ChangeEmailResponse)
 	err := c.cc.Invoke(ctx, UserProfile_ChangeEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userProfileClient) ChangeEmailConfirm(ctx context.Context, in *ChangeEmailConfirmRequest, opts ...grpc.CallOption) (*ChangeEmailConfirmResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangeEmailConfirmResponse)
+	err := c.cc.Invoke(ctx, UserProfile_ChangeEmailConfirm_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +100,7 @@ func (c *userProfileClient) UpdateProfileInfo(ctx context.Context, in *UpdatePro
 // for forward compatibility.
 type UserProfileServer interface {
 	ChangeEmail(context.Context, *ChangeEmailRequest) (*ChangeEmailResponse, error)
+	ChangeEmailConfirm(context.Context, *ChangeEmailConfirmRequest) (*ChangeEmailConfirmResponse, error)
 	ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error)
 	GetProfileInfo(context.Context, *GetProfileInfoRequest) (*GetProfileInfoResponse, error)
 	UpdateProfileInfo(context.Context, *UpdateProfileInfoRequest) (*UpdateProfileInfoResponse, error)
@@ -103,6 +116,9 @@ type UnimplementedUserProfileServer struct{}
 
 func (UnimplementedUserProfileServer) ChangeEmail(context.Context, *ChangeEmailRequest) (*ChangeEmailResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeEmail not implemented")
+}
+func (UnimplementedUserProfileServer) ChangeEmailConfirm(context.Context, *ChangeEmailConfirmRequest) (*ChangeEmailConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeEmailConfirm not implemented")
 }
 func (UnimplementedUserProfileServer) ChangePassword(context.Context, *ChangePasswordRequest) (*ChangePasswordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangePassword not implemented")
@@ -148,6 +164,24 @@ func _UserProfile_ChangeEmail_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserProfileServer).ChangeEmail(ctx, req.(*ChangeEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserProfile_ChangeEmailConfirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeEmailConfirmRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserProfileServer).ChangeEmailConfirm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserProfile_ChangeEmailConfirm_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserProfileServer).ChangeEmailConfirm(ctx, req.(*ChangeEmailConfirmRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -216,6 +250,10 @@ var UserProfile_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangeEmail",
 			Handler:    _UserProfile_ChangeEmail_Handler,
+		},
+		{
+			MethodName: "ChangeEmailConfirm",
+			Handler:    _UserProfile_ChangeEmailConfirm_Handler,
 		},
 		{
 			MethodName: "ChangePassword",
