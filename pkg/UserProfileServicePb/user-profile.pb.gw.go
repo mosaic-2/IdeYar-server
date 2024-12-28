@@ -57,6 +57,32 @@ func local_request_UserProfile_ChangeEmail_0(ctx context.Context, marshaler runt
 
 }
 
+func request_UserProfile_ChangeEmailConfirm_0(ctx context.Context, marshaler runtime.Marshaler, client UserProfileClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ChangeEmailConfirmRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.ChangeEmailConfirm(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_UserProfile_ChangeEmailConfirm_0(ctx context.Context, marshaler runtime.Marshaler, server UserProfileServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq ChangeEmailConfirmRequest
+	var metadata runtime.ServerMetadata
+
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := server.ChangeEmailConfirm(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 func request_UserProfile_ChangePassword_0(ctx context.Context, marshaler runtime.Marshaler, client UserProfileClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq ChangePasswordRequest
 	var metadata runtime.ServerMetadata
@@ -156,6 +182,31 @@ func RegisterUserProfileHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		}
 
 		forward_UserProfile_ChangeEmail_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
+	mux.Handle("POST", pattern_UserProfile_ChangeEmailConfirm_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/IdeYarAPI.UserProfile/ChangeEmailConfirm", runtime.WithHTTPPathPattern("/user-profile/change-email-confirm"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_UserProfile_ChangeEmailConfirm_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_UserProfile_ChangeEmailConfirm_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -297,6 +348,28 @@ func RegisterUserProfileHandlerClient(ctx context.Context, mux *runtime.ServeMux
 
 	})
 
+	mux.Handle("POST", pattern_UserProfile_ChangeEmailConfirm_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		var annotatedContext context.Context
+		annotatedContext, err = runtime.AnnotateContext(ctx, mux, req, "/IdeYarAPI.UserProfile/ChangeEmailConfirm", runtime.WithHTTPPathPattern("/user-profile/change-email-confirm"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_UserProfile_ChangeEmailConfirm_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_UserProfile_ChangeEmailConfirm_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_UserProfile_ChangePassword_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -369,6 +442,8 @@ func RegisterUserProfileHandlerClient(ctx context.Context, mux *runtime.ServeMux
 var (
 	pattern_UserProfile_ChangeEmail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"user-profile", "change-email"}, ""))
 
+	pattern_UserProfile_ChangeEmailConfirm_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"user-profile", "change-email-confirm"}, ""))
+
 	pattern_UserProfile_ChangePassword_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"user-profile", "change-password"}, ""))
 
 	pattern_UserProfile_GetProfileInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"user-profile", "get-profile"}, ""))
@@ -378,6 +453,8 @@ var (
 
 var (
 	forward_UserProfile_ChangeEmail_0 = runtime.ForwardResponseMessage
+
+	forward_UserProfile_ChangeEmailConfirm_0 = runtime.ForwardResponseMessage
 
 	forward_UserProfile_ChangePassword_0 = runtime.ForwardResponseMessage
 

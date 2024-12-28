@@ -199,8 +199,10 @@ func (s *Server) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReque
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid Email")
 	}
 
-	token := util.GenerateForgetPassToken()
-	// TODO: get userId from email and store token and userId in db
+	token, err := util.CreateForgetPassToken(req.GetEmail(), time.Minute*5, s.hmacSecret)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to generate token %v", token)
+	}
 
 	go util.SendForgetPasswordEmail(ctx, req.GetEmail(), token)
 
@@ -210,8 +212,7 @@ func (s *Server) ForgetPassword(ctx context.Context, req *pb.ForgetPasswordReque
 func (s *Server) ForgetPasswordFinalize(ctx context.Context, req *pb.ForgetPasswordFinalizeRequest) (*pb.ForgetPasswordFinalizeResponse, error) {
 	db := dbutil.GormDB(ctx)
 
-	// TODO: get userId from token in db
-	userID := util.GetUserIDFromCtx(ctx)
+	email, err := util.ParseForgetPassToken(req.GetResetToken(), s.hmacSecret)
 
 	newPassword := req.GetNewPassword()
 	if !util.ValidatePassword(newPassword) {
@@ -223,7 +224,7 @@ func (s *Server) ForgetPasswordFinalize(ctx context.Context, req *pb.ForgetPassw
 	}
 
 	if err := db.Model(&model.User{}).Where(
-		"id = ?", userID,
+		"email = ?", email,
 	).Update("password", string(bcryptNewPass)).Error; err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to update password: %v", err)
 	}
