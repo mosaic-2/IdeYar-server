@@ -25,6 +25,8 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			"/api/image",
 			"/api/landing-posts",
 			"/api/search-post",
+			"/auth/forget-password",
+			"/auth/forget-password-finalize",
 		}
 
 		for _, method := range allowedMethods {
