@@ -45,7 +45,7 @@ func LoadVerificationEmail(code string) (string, error) {
 
 func LoadChangeMailEmail(code string) (string, error) {
 
-	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
+	tmp, err := template.ParseFiles("./internal/servicers/util/templates/changeMail.gohtml")
 	if err != nil {
 		return "", err
 	}
@@ -64,7 +64,7 @@ func LoadChangeMailEmail(code string) (string, error) {
 
 func LoadForgetPasswordEmail(code string) (string, error) {
 
-	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
+	tmp, err := template.ParseFiles("./internal/servicers/util/templates/forgetPass.gohtml")
 	if err != nil {
 		return "", err
 	}
