@@ -67,7 +67,19 @@ message LandingPostsResponse {
 
 message SearchPostRequest {
     string title = 1;
+    message Filters {
+        repeated string categories = 1;
+        bool ascending = 2;
+        enum SortBy {
+            SORT_BY_UNSPECIFIED = 0;
+            CREATED_TIME = 1;
+            DEADLINE = 2;
+        }
+
+        SortBy sort_by = 4;
+    }
     int32 page = 2;
+    Filters filter = 3;
 }
 
 message SearchPostResponse {
