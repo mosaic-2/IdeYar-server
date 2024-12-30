@@ -24,11 +24,6 @@ func (s *Server) ChangeEmail(ctx context.Context, in *pb.ChangeEmailRequest) (*p
 		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %s", email)
 	}
 
-	// Directly update the user's email in the database
-	if err := db.Model(&model.User{}).Where("id = ?", userID).Update("email", email).Error; err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update email: %v", err)
-	}
-
 	token, err := util.CreateChangeMailToken(userID, email, time.Minute*30, s.hmacSecret)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "faild to create token: %v", err)
@@ -47,7 +42,6 @@ func (s *Server) ChangeEmailConfirm(ctx context.Context, in *pb.ChangeEmailConfi
 		return nil, status.Errorf(codes.InvalidArgument, "failed to parse token %v", err)
 	}
 
-	// Directly update the user's email in the database
 	if err := db.Model(&model.User{}).Where("id = ?", userID).Update("email", newMail).Error; err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to update email: %v", err)
 	}
