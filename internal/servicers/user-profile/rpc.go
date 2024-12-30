@@ -15,8 +15,6 @@ import (
 )
 
 func (s *Server) ChangeEmail(ctx context.Context, in *pb.ChangeEmailRequest) (*pb.ChangeEmailResponse, error) {
-	db := dbutil.GormDB(ctx)
-
 	userID := util.GetUserIDFromCtx(ctx)
 
 	email := in.GetEmail()
