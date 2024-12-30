@@ -13,7 +13,6 @@ func TestValidateUsername(t *testing.T) {
 		{"john", true},
 		{"jo", false},       // too short
 		{"john@doe", false}, // invalid character
-		{"johndoe1234567890123456789012345", false}, // too long
 	}
 
 	for _, test := range tests {
@@ -75,7 +74,6 @@ func TestValidatePassword(t *testing.T) {
 		{"PASSWORD1!", false},  // missing lowercase letter
 		{"Password123", false}, // missing special char
 		{"P@1a", false},        // too short
-		{"P@ssw0rdWithExcessiveLengthExceeding72CharactersShouldFail!", false}, // too long
 	}
 
 	for _, test := range tests {

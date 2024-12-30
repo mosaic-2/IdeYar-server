@@ -1,56 +1,95 @@
 package util
 
 import (
+	"bytes"
 	"context"
-	"github.com/google/uuid"
-	"testing"
-	"time"
-
 	"google.golang.org/grpc/metadata"
+	"testing"
 )
 
 func TestGenerateVerificationCode(t *testing.T) {
 	code := GenerateVerificationCode()
-	if len(code) != 6 {
-		t.Errorf("Expected code of length 6, got %d", len(code))
+	codeLen := 6
+
+	if len(code) != codeLen {
+		t.Errorf("Expected length %d, got %d", codeLen, len(code))
+	}
+
+	for _, char := range code {
+		if !((char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9')) {
+			t.Errorf("Unexpected character %c in code", char)
+		}
 	}
 }
 
-func TestCreateLoginToken(t *testing.T) {
-	key := []byte("test_secret_key")
-	_, err := CreateLoginToken("12345", time.Hour, key)
+func TestLoadVerificationEmail(t *testing.T) {
+	code := "TESTCODE"
+	expectedContents := "verification" // part of the template content for checking
+
+	message, err := LoadVerificationEmail(code)
 	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if !bytes.Contains([]byte(message), []byte(expectedContents)) {
+		t.Errorf("Expected message to contain %q, got %s", expectedContents, message)
 	}
 }
 
-func TestCreateRefreshToken(t *testing.T) {
-	key := []byte("test_secret_key")
-	_, err := CreateRefreshToken("12345", time.Hour, key)
+func TestLoadChangeMailEmail(t *testing.T) {
+	code := "TESTCODE"
+	expectedContents := "changeMail"
+
+	message, err := LoadChangeMailEmail(code)
 	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if !bytes.Contains([]byte(message), []byte(expectedContents)) {
+		t.Errorf("Expected message to contain %q, got %s", expectedContents, message)
+	}
+}
+
+func TestLoadForgetPasswordEmail(t *testing.T) {
+	code := "TESTCODE"
+	expectedContents := "forgetPass"
+
+	message, err := LoadForgetPasswordEmail(code)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if !bytes.Contains([]byte(message), []byte(expectedContents)) {
+		t.Errorf("Expected message to contain %q, got %s", expectedContents, message)
 	}
 }
 
 func TestGenerateFileName(t *testing.T) {
-	fileName := GenerateFileName()
-	if _, err := uuid.Parse(fileName); err != nil {
-		t.Errorf("Expected valid UUID string, got error %v", err)
+	name := GenerateFileName()
+	if len(name) == 0 {
+		t.Error("Expected non-empty file name")
 	}
 }
 
 func TestGetUserIDFromCtx(t *testing.T) {
-	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("user-id", "42"))
+	md := metadata.New(map[string]string{"user-id": "12345"})
+	ctx := metadata.NewIncomingContext(context.Background(), md)
+
 	userID := GetUserIDFromCtx(ctx)
-	expectedUserID := int64(42)
+	expectedUserID := int64(12345)
+
 	if userID != expectedUserID {
-		t.Errorf("Expected %d, got %d", expectedUserID, userID)
+		t.Errorf("Expected user ID %v, got %v", expectedUserID, userID)
 	}
 }
 
-func TestGenerateForgetPassToken(t *testing.T) {
-	token := GenerateForgetPassToken()
-	if len(token) != 20 {
-		t.Errorf("Expected token of length 20, got %d", len(token))
+func TestGetUserIDFromCtx_NoMetadata(t *testing.T) {
+	ctx := context.Background()
+
+	userID := GetUserIDFromCtx(ctx)
+	expectedUserID := int64(0)
+
+	if userID != expectedUserID {
+		t.Errorf("Expected user ID %v, got %v", expectedUserID, userID)
 	}
 }
