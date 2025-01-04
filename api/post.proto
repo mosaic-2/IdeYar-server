@@ -82,8 +82,12 @@ message SearchPostResponse {
 
 message PostOverview {
     int64 id = 1;
-    string title = 2;
-    string image = 3;
+    int64 user_id = 2;
+    string username = 3;
+    string user_profile_image = 4;
+    string title = 5;
+    string description = 6;
+    string image = 7;
 }
 
 message FundOverview {

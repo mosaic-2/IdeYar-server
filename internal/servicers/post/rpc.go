@@ -260,9 +260,9 @@ func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.PostOverview, error) 
 	userProjects := []*pb.PostOverview{}
 
 	err := tx.Table("post AS p").
-		Joins("JOIN post_detail pd ON p.id = pd.post_id").
-		Where("p.user_id = ? AND pd.order_c = 0", userID).
-		Select("p.id, p.title, pd.image").
+		Joins("JOIN user_t AS u ON p.user_id = u.id").
+		Where("p.user_id = ?", userID).
+		Select("p.id, p.title, p.description, p.image, u.id AS user_id, u.username, u.profile_image_url AS user_profile_image").
 		Scan(&userProjects).Error
 	if err != nil {
 		return nil, err
