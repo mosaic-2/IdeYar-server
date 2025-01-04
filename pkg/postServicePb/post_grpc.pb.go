@@ -20,7 +20,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Post_CreatePost_FullMethodName     = "/IdeYarAPI.Post/CreatePost"
 	Post_GetPost_FullMethodName        = "/IdeYarAPI.Post/GetPost"
 	Post_SearchPost_FullMethodName     = "/IdeYarAPI.Post/SearchPost"
 	Post_LandingPosts_FullMethodName   = "/IdeYarAPI.Post/LandingPosts"
@@ -34,7 +33,6 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PostClient interface {
-	CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error)
 	GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error)
 	SearchPost(ctx context.Context, in *SearchPostRequest, opts ...grpc.CallOption) (*SearchPostResponse, error)
 	LandingPosts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LandingPostsResponse, error)
@@ -50,16 +48,6 @@ type postClient struct {
 
 func NewPostClient(cc grpc.ClientConnInterface) PostClient {
 	return &postClient{cc}
-}
-
-func (c *postClient) CreatePost(ctx context.Context, in *CreatePostRequest, opts ...grpc.CallOption) (*CreatePostResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreatePostResponse)
-	err := c.cc.Invoke(ctx, Post_CreatePost_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *postClient) GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error) {
@@ -136,7 +124,6 @@ func (c *postClient) UserIDProjects(ctx context.Context, in *UserIDProjectsReque
 // All implementations must embed UnimplementedPostServer
 // for forward compatibility.
 type PostServer interface {
-	CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error)
 	GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error)
 	SearchPost(context.Context, *SearchPostRequest) (*SearchPostResponse, error)
 	LandingPosts(context.Context, *emptypb.Empty) (*LandingPostsResponse, error)
@@ -154,9 +141,6 @@ type PostServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPostServer struct{}
 
-func (UnimplementedPostServer) CreatePost(context.Context, *CreatePostRequest) (*CreatePostResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreatePost not implemented")
-}
 func (UnimplementedPostServer) GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
 }
@@ -197,24 +181,6 @@ func RegisterPostServer(s grpc.ServiceRegistrar, srv PostServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&Post_ServiceDesc, srv)
-}
-
-func _Post_CreatePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreatePostRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PostServer).CreatePost(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Post_CreatePost_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).CreatePost(ctx, req.(*CreatePostRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Post_GetPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -350,10 +316,6 @@ var Post_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "IdeYarAPI.Post",
 	HandlerType: (*PostServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreatePost",
-			Handler:    _Post_CreatePost_Handler,
-		},
 		{
 			MethodName: "GetPost",
 			Handler:    _Post_GetPost_Handler,

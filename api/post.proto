@@ -8,12 +8,6 @@ package IdeYarAPI;
 option go_package = "./../pkg/postServicePb";
 
 service Post {
-    rpc CreatePost(CreatePostRequest) returns (CreatePostResponse){
-        option (google.api.http) = {
-            post: "/api/post"
-            body: "*"
-        };
-    };
     rpc GetPost(GetPostRequest) returns (GetPostResponse){
         option (google.api.http) = {
             get: "/api/post/{id}"
@@ -99,17 +93,6 @@ message FundOverview {
     string amount = 4;
 }
 
-message CreatePostRequest {
-    string title = 1;
-    string minimum_fund = 2;
-    string deadline_date = 3;
-    repeated PostDetail post_details = 4;
-}
-
-message CreatePostResponse {
-    int64 id = 1;
-}
-
 message PostDetail {
     string title = 1;
     string description = 2;
@@ -122,13 +105,17 @@ message GetPostRequest {
 }
 
 message GetPostResponse {
-    int64 user_id = 1;
-    string title = 2;
-    string minimum_fund = 3;
-    string fund_raised = 4;
-    string deadline_date = 5;
-    google.protobuf.Timestamp created_at = 6;
-    repeated PostDetail post_details = 7;
+    int64 id = 1;
+    int64 user_id = 2;
+    string username = 3;
+    string user_profile_image = 4;
+    string title = 5;
+    string minimum_fund = 6;
+    string fund_raised = 7;
+    string deadline_date = 8;
+    string image = 9;
+    google.protobuf.Timestamp created_at = 10;
+    repeated PostDetail post_details = 11;
 }
 
 message FundPostRequest {

@@ -38,6 +38,8 @@ func (User) TableName() string {
 type Post struct {
 	ID           int64
 	Title        string
+	Description  string
+	Image        string
 	UserID       int64
 	MinimumFund  decimal.Decimal
 	FundRaised   decimal.Decimal

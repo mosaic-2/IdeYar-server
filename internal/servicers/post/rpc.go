@@ -18,52 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Server) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
-
-	db := dbutil.GormDB(ctx)
-
-	userID := util.GetUserIDFromCtx(ctx)
-
-	var id int64
-
-	err := db.Transaction(func(tx *gorm.DB) error {
-		post, postDetails, err := toPostCreatePayload(req, userID)
-		if err != nil {
-			return err
-		}
-
-		err = validatePost(post)
-		if err != nil {
-			return err
-		}
-
-		err = tx.Create(&post).Error
-		if err != nil {
-			return err
-		}
-
-		id = post.ID
-
-		for _, detail := range postDetails {
-			detail.PostID = id
-		}
-
-		err = tx.Create(&postDetails).Error
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.CreatePostResponse{Id: id}, nil
-}
-
 func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostResponse, error) {
-
 	db := dbutil.GormDB(ctx)
 
 	postID := req.GetId()
@@ -77,6 +32,15 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 			return nil, status.Error(codes.NotFound, "could not find post")
 		}
 		return nil, status.Error(codes.Internal, "error retreiving post")
+	}
+
+	user := model.User{ID: post.UserID}
+	err = db.Model(&user).Take(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, status.Error(codes.NotFound, "could not find user")
+		}
+		return nil, status.Error(codes.Internal, "error retreiving user")
 	}
 
 	postDetails := []model.PostDetail{}
@@ -102,13 +66,17 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 	}
 
 	return &pb.GetPostResponse{
-		UserId:       post.UserID,
-		Title:        post.Title,
-		MinimumFund:  post.MinimumFund.String(),
-		FundRaised:   post.FundRaised.String(),
-		DeadlineDate: post.DeadlineDate.Format(time.DateOnly),
-		CreatedAt:    timestamppb.New(post.CreatedAt),
-		PostDetails:  postDetailsPb,
+		Id:               post.ID,
+		UserId:           post.UserID,
+		Username:         user.Username,
+		UserProfileImage: user.ProfileImageURL,
+		Title:            post.Title,
+		MinimumFund:      post.MinimumFund.String(),
+		FundRaised:       post.FundRaised.String(),
+		DeadlineDate:     post.DeadlineDate.Format(time.DateOnly),
+		Image:            post.Image,
+		CreatedAt:        timestamppb.New(post.CreatedAt),
+		PostDetails:      postDetailsPb,
 	}, nil
 
 }
@@ -253,45 +221,38 @@ func (s *Server) UserIDProjects(ctx context.Context, req *pb.UserIDProjectsReque
 	return &pb.UserProjectsResponse{PostOverview: userProjects}, nil
 }
 
-func toPostCreatePayload(req *pb.CreatePostRequest, userID int64) (*model.Post, []*model.PostDetail, error) {
-
-	minimumFund, err := decimal.NewFromString(req.GetMinimumFund())
-	if err != nil {
-		return nil, nil, status.Errorf(codes.InvalidArgument, "invalid minimum fund format")
-	}
-
-	deadlineDate, err := time.ParseInLocation(time.DateOnly, req.GetDeadlineDate(), time.Local)
-	if err != nil {
-		return nil, nil, status.Error(codes.InvalidArgument, "invalid date format")
-	}
-
-	post := &model.Post{
-		Title:        req.GetTitle(),
-		MinimumFund:  minimumFund,
-		UserID:       userID,
-		DeadlineDate: deadlineDate,
-	}
-
-	postDetails := []*model.PostDetail{}
-
-	for _, detail := range req.GetPostDetails() {
-		postDetail := &model.PostDetail{
-			Order:       detail.GetOrder(),
-			Title:       detail.GetTitle(),
-			Description: detail.GetDescription(),
-		}
-		postDetails = append(postDetails, postDetail)
-	}
-
-	return post, postDetails, nil
-}
-
-func validatePost(post *model.Post) error {
+func validatePost(post model.Post) error {
 	if post.Title == "" {
 		return status.Errorf(codes.InvalidArgument, "post title can not be empty")
 	}
 
 	return nil
+}
+
+func validatePostDetail(postDetail model.PostDetail) error {
+	if postDetail.Order < 0 || postDetail.Order > 9 {
+		return status.Errorf(codes.InvalidArgument, "each post can have at most 10 parts")
+	}
+
+	if postDetail.PostID == 0 {
+		return status.Errorf(codes.InvalidArgument, "invalid post id")
+	}
+
+	return nil
+}
+
+func hasCreateAccessPostDetail(tx *gorm.DB, postDetail model.PostDetail, userID int64) (bool, error) {
+	var hasAccess bool
+
+	err := tx.Table("post").
+		Where("id = ? AND user_id = ?", postDetail.PostID, userID).
+		Select("count(*) > 0").
+		Scan(&hasAccess).Error
+	if err != nil {
+		return false, err
+	}
+
+	return hasAccess, err
 }
 
 func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.PostOverview, error) {
