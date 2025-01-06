@@ -7,13 +7,7 @@ import "google/protobuf/timestamp.proto";
 package IdeYarAPI;
 option go_package = "./../pkg/postServicePb";
 
-service Post {
-    rpc CreatePost(CreatePostRequest) returns (CreatePostResponse){
-        option (google.api.http) = {
-            post: "/api/post"
-            body: "*"
-        };
-    };
+service PostService {
     rpc GetPost(GetPostRequest) returns (GetPostResponse){
         option (google.api.http) = {
             get: "/api/post/{id}"
@@ -62,7 +56,7 @@ message LandingPost {
 }
 
 message LandingPostsResponse {
-    repeated LandingPost landing_posts = 1;
+    repeated Post posts = 1;
 }
 
 message SearchPostRequest {
@@ -88,26 +82,31 @@ message SearchPostResponse {
 
 message PostOverview {
     int64 id = 1;
-    string title = 2;
-    string image = 3;
+    int64 user_id = 2;
+    string username = 3;
+    string profile_image_url = 4;
+    string title = 5;
+    string description = 6;
+    string image = 7;
 }
 
 message FundOverview {
-    int64 id = 1;
-    string title = 2;
-    string image = 3;
-    string amount = 4;
+    Post post = 1;
+    string amount = 2;
 }
 
-message CreatePostRequest {
-    string title = 1;
-    string minimum_fund = 2;
-    string deadline_date = 3;
-    repeated PostDetail post_details = 4;
-}
-
-message CreatePostResponse {
+message Post {
     int64 id = 1;
+    int64 user_id = 2;
+    string username = 3;
+    string profile_image_url = 4;
+    string title = 5;
+    string description = 6;
+    string minimum_fund = 7;
+    string fund_raised = 8;
+    string deadline_date = 9;
+    string image = 10;
+    google.protobuf.Timestamp created_at = 11;
 }
 
 message PostDetail {
@@ -122,13 +121,8 @@ message GetPostRequest {
 }
 
 message GetPostResponse {
-    int64 user_id = 1;
-    string title = 2;
-    string minimum_fund = 3;
-    string fund_raised = 4;
-    string deadline_date = 5;
-    google.protobuf.Timestamp created_at = 6;
-    repeated PostDetail post_details = 7;
+    Post post = 1;
+    repeated PostDetail post_details = 2;
 }
 
 message FundPostRequest {
@@ -137,11 +131,11 @@ message FundPostRequest {
 }
 
 message UserFundsResponse {
-    repeated FundOverview fund_overview = 1;
+    repeated FundOverview fund_overviews = 1;
 }
 
 message UserProjectsResponse {
-    repeated PostOverview post_overview = 1;
+    repeated Post posts = 1;
 }
 
 message UserIDProjectsRequest {

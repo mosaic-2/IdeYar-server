@@ -18,60 +18,37 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Server) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
+const (
+	landingPostsCount = 5
+)
 
-	db := dbutil.GormDB(ctx)
-
-	userID := util.GetUserIDFromCtx(ctx)
-
-	var id int64
-
-	err := db.Transaction(func(tx *gorm.DB) error {
-		post, postDetails, err := toPostCreatePayload(req, userID)
-		if err != nil {
-			return err
-		}
-
-		err = validatePost(post)
-		if err != nil {
-			return err
-		}
-
-		err = tx.Create(&post).Error
-		if err != nil {
-			return err
-		}
-
-		id = post.ID
-
-		for _, detail := range postDetails {
-			detail.PostID = id
-		}
-
-		err = tx.Create(&postDetails).Error
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &pb.CreatePostResponse{Id: id}, nil
+type Post struct {
+	ID              int64
+	UserID          int64
+	Username        string
+	ProfileImageUrl string
+	Title           string
+	Description     string
+	Image           string
+	MinimumFund     decimal.Decimal
+	FundRaised      decimal.Decimal
+	DeadlineDate    time.Time
+	CreatedAt       time.Time
 }
 
 func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostResponse, error) {
-
 	db := dbutil.GormDB(ctx)
 
 	postID := req.GetId()
 
-	post := model.Post{}
+	post := Post{}
 	post.ID = postID
 
-	err := db.Model(&post).Take(&post).Error
+	err := db.Table("post AS p").
+		Joins("JOIN user_t AS u ON p.user_id = u.id").
+		Where("p.id = ?", postID).
+		Select("p.*, u.username, u.profile_image_url").
+		Scan(&post).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "could not find post")
@@ -79,7 +56,20 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		return nil, status.Error(codes.Internal, "error retreiving post")
 	}
 
-	postDetails := []model.PostDetail{}
+	postPb := &pb.Post{
+		Id:              postID,
+		Title:           post.Title,
+		Image:           post.Image,
+		MinimumFund:     post.MinimumFund.String(),
+		FundRaised:      post.FundRaised.String(),
+		DeadlineDate:    post.DeadlineDate.Format(time.DateOnly),
+		CreatedAt:       timestamppb.New(post.CreatedAt),
+		UserId:          post.UserID,
+		Username:        post.Username,
+		ProfileImageUrl: post.ProfileImageUrl,
+	}
+
+	postDetails := []*pb.PostDetail{}
 
 	err = db.Model(model.PostDetail{}).
 		Where("post_id = ?", postID).
@@ -90,25 +80,9 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		}
 	}
 
-	postDetailsPb := []*pb.PostDetail{}
-
-	for _, postD := range postDetails {
-		postDetailsPb = append(postDetailsPb, &pb.PostDetail{
-			Title:       postD.Title,
-			Description: postD.Description,
-			Order:       postD.Order,
-			Image:       &postD.Image,
-		})
-	}
-
 	return &pb.GetPostResponse{
-		UserId:       post.UserID,
-		Title:        post.Title,
-		MinimumFund:  post.MinimumFund.String(),
-		FundRaised:   post.FundRaised.String(),
-		DeadlineDate: post.DeadlineDate.Format(time.DateOnly),
-		CreatedAt:    timestamppb.New(post.CreatedAt),
-		PostDetails:  postDetailsPb,
+		Post:        postPb,
+		PostDetails: postDetails,
 	}, nil
 
 }
@@ -146,20 +120,20 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.LandingPostsResponse, error) {
 	db := dbutil.GormDB(ctx)
 
-	result := []*pb.LandingPost{}
+	result := []*pb.Post{}
 
 	err := db.Raw(`
-		SELECT p.id, p.title, pd.image, p.fund_raised, p.minimum_fund
-		FROM post p LEFT JOIN post_detail pd ON p.id = pd.post_id
-		WHERE order_c = 0
+		SELECT p.*
+		FROM post p
 		ORDER BY RANDOM()
-	`).Scan(&result).Error
+		LIMIT ?
+	`, landingPostsCount).Scan(&result).Error
 	if err != nil {
 		return nil, status.Error(codes.Internal, "error while retreiving posts")
 	}
 
 	return &pb.LandingPostsResponse{
-		LandingPosts: result,
+		Posts: result,
 	}, nil
 }
 
@@ -212,19 +186,43 @@ func (s *Server) UserFunds(ctx context.Context, req *emptypb.Empty) (*pb.UserFun
 
 	userID := util.GetUserIDFromCtx(ctx)
 
-	userFunds := []*pb.FundOverview{}
+	userFunds := []struct {
+		Post
+		Amount decimal.Decimal
+	}{}
 
 	err := db.Table("fund AS f").
 		Joins("JOIN post p ON f.post_id = p.id").
-		Joins("JOIN post_detail pd ON p.id = pd.post_id").
-		Where("f.user_id = ? AND pd.order_c = 0", userID).
-		Select("p.id, p.title, pd.image, f.amount").
+		Joins("JOIN user_t u ON p.user_id = u.id").
+		Where("f.user_id = ?", userID).
+		Select("p.*, f.amount, u.username, u.profile_image_url").
 		Scan(&userFunds).Error
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return &pb.UserFundsResponse{FundOverview: userFunds}, nil
+	userFundsPb := []*pb.FundOverview{}
+
+	for _, fund := range userFunds {
+		userFundsPb = append(userFundsPb, &pb.FundOverview{
+			Post: &pb.Post{
+				Id:              fund.ID,
+				UserId:          fund.UserID,
+				Username:        fund.Username,
+				ProfileImageUrl: fund.ProfileImageUrl,
+				Title:           fund.Title,
+				Description:     fund.Description,
+				MinimumFund:     fund.MinimumFund.String(),
+				FundRaised:      fund.FundRaised.String(),
+				DeadlineDate:    fund.DeadlineDate.Format(time.DateOnly),
+				Image:           fund.Image,
+				CreatedAt:       timestamppb.New(fund.DeadlineDate),
+			},
+			Amount: fund.Amount.String(),
+		})
+	}
+
+	return &pb.UserFundsResponse{FundOverviews: userFundsPb}, nil
 }
 
 func (s *Server) UserProjects(ctx context.Context, req *emptypb.Empty) (*pb.UserProjectsResponse, error) {
@@ -237,7 +235,7 @@ func (s *Server) UserProjects(ctx context.Context, req *emptypb.Empty) (*pb.User
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return &pb.UserProjectsResponse{PostOverview: userProjects}, nil
+	return &pb.UserProjectsResponse{Posts: userProjects}, nil
 }
 
 func (s *Server) UserIDProjects(ctx context.Context, req *pb.UserIDProjectsRequest) (*pb.UserProjectsResponse, error) {
@@ -250,43 +248,10 @@ func (s *Server) UserIDProjects(ctx context.Context, req *pb.UserIDProjectsReque
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	return &pb.UserProjectsResponse{PostOverview: userProjects}, nil
+	return &pb.UserProjectsResponse{Posts: userProjects}, nil
 }
 
-func toPostCreatePayload(req *pb.CreatePostRequest, userID int64) (*model.Post, []*model.PostDetail, error) {
-
-	minimumFund, err := decimal.NewFromString(req.GetMinimumFund())
-	if err != nil {
-		return nil, nil, status.Errorf(codes.InvalidArgument, "invalid minimum fund format")
-	}
-
-	deadlineDate, err := time.ParseInLocation(time.DateOnly, req.GetDeadlineDate(), time.Local)
-	if err != nil {
-		return nil, nil, status.Error(codes.InvalidArgument, "invalid date format")
-	}
-
-	post := &model.Post{
-		Title:        req.GetTitle(),
-		MinimumFund:  minimumFund,
-		UserID:       userID,
-		DeadlineDate: deadlineDate,
-	}
-
-	postDetails := []*model.PostDetail{}
-
-	for _, detail := range req.GetPostDetails() {
-		postDetail := &model.PostDetail{
-			Order:       detail.GetOrder(),
-			Title:       detail.GetTitle(),
-			Description: detail.GetDescription(),
-		}
-		postDetails = append(postDetails, postDetail)
-	}
-
-	return post, postDetails, nil
-}
-
-func validatePost(post *model.Post) error {
+func validatePost(post model.Post) error {
 	if post.Title == "" {
 		return status.Errorf(codes.InvalidArgument, "post title can not be empty")
 	}
@@ -294,18 +259,67 @@ func validatePost(post *model.Post) error {
 	return nil
 }
 
-func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.PostOverview, error) {
+func validatePostDetail(postDetail model.PostDetail) error {
+	if postDetail.Order < 0 || postDetail.Order > 9 {
+		return status.Errorf(codes.InvalidArgument, "each post can have at most 10 parts")
+	}
 
-	userProjects := []*pb.PostOverview{}
+	if postDetail.PostID == 0 {
+		return status.Errorf(codes.InvalidArgument, "invalid post id")
+	}
+
+	return nil
+}
+
+func hasCreateAccessPostDetail(tx *gorm.DB, postDetail model.PostDetail, userID int64) (bool, error) {
+	var hasAccess bool
+
+	err := tx.Table("post").
+		Where("id = ? AND user_id = ?", postDetail.PostID, userID).
+		Select("count(*) > 0").
+		Scan(&hasAccess).Error
+	if err != nil {
+		return false, err
+	}
+
+	return hasAccess, err
+}
+
+func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.Post, error) {
+
+	userProjects := []*Post{}
 
 	err := tx.Table("post AS p").
-		Joins("JOIN post_detail pd ON p.id = pd.post_id").
-		Where("p.user_id = ? AND pd.order_c = 0", userID).
-		Select("p.id, p.title, pd.image").
+		Joins("JOIN user_t AS u ON p.user_id = u.id").
+		Where("p.user_id = ?", userID).
+		Select("p.*, u.id AS user_id, u.username, u.profile_image_url").
 		Scan(&userProjects).Error
 	if err != nil {
 		return nil, err
 	}
 
-	return userProjects, nil
+	return convertPostToPostPb(userProjects), nil
+}
+
+func convertPostToPostPb(posts []*Post) []*pb.Post {
+
+	result := []*pb.Post{}
+
+	for _, post := range posts {
+		result = append(result, &pb.Post{
+			Id:              post.ID,
+			UserId:          post.ID,
+			Username:        post.Username,
+			ProfileImageUrl: post.ProfileImageUrl,
+			Title:           post.Title,
+			Description:     post.Description,
+			MinimumFund:     post.MinimumFund.String(),
+			FundRaised:      post.FundRaised.String(),
+			DeadlineDate:    post.DeadlineDate.Local().Format(time.DateOnly),
+			Image:           post.Image,
+			CreatedAt:       timestamppb.New(post.CreatedAt),
+		})
+	}
+
+	return result
 }

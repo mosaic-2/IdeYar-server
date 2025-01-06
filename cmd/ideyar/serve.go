@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/mosaic-2/IdeYar-server/internal/interceptor"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/mosaic-2/IdeYar-server/internal/interceptor"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
@@ -89,7 +90,7 @@ func runGRPCServer() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize post server: %w", err)
 	}
-	postServicePb.RegisterPostServer(grpcServer, postServer)
+	postServicePb.RegisterPostServiceServer(grpcServer, postServer)
 
 	userProfileServer, err := userProfileImpl.NewServer(secretKey)
 	if err != nil {
@@ -127,7 +128,7 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = postServicePb.RegisterPostHandlerFromEndpoint(
+	err = postServicePb.RegisterPostServiceHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
@@ -137,7 +138,12 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = mux.HandlePath("POST", "/api/post-image", postImpl.HandlePostImage)
+	err = mux.HandlePath("POST", "/api/post", postImpl.HandlePostCreate)
+	if err != nil {
+		return err
+	}
+
+	err = mux.HandlePath("POST", "/api/post-detail", postImpl.HandlePostDetailsCreate)
 	if err != nil {
 		return err
 	}

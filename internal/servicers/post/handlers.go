@@ -8,16 +8,34 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
 	"github.com/mosaic-2/IdeYar-server/internal/model"
 	"github.com/mosaic-2/IdeYar-server/internal/servicers/util"
+	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 )
 
 const UploadDir = "images"
 
-func HandlePostImage(w http.ResponseWriter, r *http.Request, _ map[string]string) {
+const (
+	postTitleKey       = "title"
+	postImageKey       = "image"
+	postDescriptionKey = "description"
+	postMinimumFundKey = "minimumFund"
+	postDeadlineKey    = "deadline"
+)
+
+const (
+	postDetailTitleKey       = "title"
+	postDetailDescriptionKey = "description"
+	postDetailOrderKey       = "order"
+	postDetailImageKey       = "image"
+	postDetailPostIDKey      = "postID"
+)
+
+func HandlePostCreate(w http.ResponseWriter, r *http.Request, _ map[string]string) {
 	userID, ok := r.Context().Value(util.UserIDCtxKey{}).(int64)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -35,108 +53,132 @@ func HandlePostImage(w http.ResponseWriter, r *http.Request, _ map[string]string
 		return
 	}
 
-	file, header, err := r.FormFile("uploadFile")
+	image, header, err := r.FormFile(postImageKey)
 	if err != nil {
 		http.Error(w, "Could not get uploaded file.", http.StatusBadRequest)
 		return
 	}
-	defer file.Close()
+	defer image.Close()
 
 	if !strings.HasPrefix(header.Header.Get("Content-Type"), "image/") {
 		http.Error(w, "The uploaded file must be an image.", http.StatusBadRequest)
 		return
 	}
 
-	postIDStr := r.PostFormValue("postID")
-	if postIDStr == "" {
-		http.Error(w, "postID is required.", http.StatusBadRequest)
-		return
-	}
-	postID, err := strconv.ParseInt(postIDStr, 10, 64)
-	if err != nil {
-		http.Error(w, "Invalid postID format.", http.StatusBadRequest)
-		return
-	}
-
-	orderStr := r.PostFormValue("order")
-	if orderStr == "" {
-		http.Error(w, "order is required.", http.StatusBadRequest)
-		return
-	}
-	order, err := strconv.ParseInt(orderStr, 10, 32)
-	if err != nil {
-		http.Error(w, "Invalid order format.", http.StatusBadRequest)
-		return
-	}
-
-	filename := util.GenerateFileName()
-
 	tx := dbutil.GormDB(r.Context())
 
 	err = tx.Transaction(func(tx *gorm.DB) error {
-		// validations
-		if order < 0 || order > 9 {
-			http.Error(w, "", http.StatusBadRequest)
-			return errors.New("invalid order")
+		post, err := getPostFromRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
+		}
+		post.UserID = userID
+
+		err = validatePost(post)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
 		}
 
-		var ownerUserID int64
-
-		err = tx.Table("post").
-			Where("id = ?", postID).
-			Select("user_id").
-			Scan(&ownerUserID).Error
+		err = tx.Create(&post).Error
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-
-		if userID != ownerUserID {
-			w.WriteHeader(http.StatusUnauthorized)
-			return errors.New("Unauthorized")
-		}
-
-		var orderExists bool
-
-		err = tx.Table("post_detail").
-			Where("post_id = ? AND order_c = ?", postID, order).
-			Select("count(*) > 0").
-			Scan(&orderExists).Error
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-
-		postDetail := model.PostDetail{
-			Image: filename,
-			Order: int32(order),
-		}
-
-		if !orderExists {
-			err := tx.Create(postDetail).Error
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return err
-			}
-		} else {
-			err := tx.Table("post_detail").
-				Where("post_id = ? AND order_c = ?", postID, order).
-				Update("image", filename).Error
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return err
-			}
+			return nil
 		}
 
 		// Create and write the file
-		dst, err := os.Create(fmt.Sprintf("%s/%s", UploadDir, filename))
+		dst, err := os.Create(fmt.Sprintf("%s/%s", UploadDir, post.Image))
 		if err != nil {
 			http.Error(w, "Could not create a file.", http.StatusInternalServerError)
 			return err
 		}
 		defer dst.Close()
 
-		if _, err := io.Copy(dst, file); err != nil {
+		if _, err := io.Copy(dst, image); err != nil {
+			http.Error(w, "Failed to save the uploaded file.", http.StatusInternalServerError)
+			return err
+		}
+
+		w.WriteHeader(http.StatusOK)
+		return nil
+	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func HandlePostDetailsCreate(w http.ResponseWriter, r *http.Request, params map[string]string) {
+	userID, ok := r.Context().Value(util.UserIDCtxKey{}).(int64)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the multipart form, limiting file size to 10MB
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		http.Error(w, "The uploaded file is too big.", http.StatusBadRequest)
+		return
+	}
+
+	image, header, err := r.FormFile(postImageKey)
+	if err != nil {
+		http.Error(w, "Could not get uploaded file.", http.StatusBadRequest)
+		return
+	}
+	defer image.Close()
+
+	if !strings.HasPrefix(header.Header.Get("Content-Type"), "image/") {
+		http.Error(w, "The uploaded file must be an image.", http.StatusBadRequest)
+		return
+	}
+
+	tx := dbutil.GormDB(r.Context())
+
+	err = tx.Transaction(func(tx *gorm.DB) error {
+		postDetail, err := getPostDetailFromRequest(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
+		}
+
+		hasAccess, err := hasCreateAccessPostDetail(tx, postDetail, userID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		}
+
+		if !hasAccess {
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		}
+
+		err = validatePostDetail(postDetail)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
+		}
+
+		err = tx.Create(&postDetail).Error
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		}
+
+		// Create and write the file
+		dst, err := os.Create(fmt.Sprintf("%s/%s", UploadDir, postDetail.Image))
+		if err != nil {
+			http.Error(w, "Could not create a file.", http.StatusInternalServerError)
+			return err
+		}
+		defer dst.Close()
+
+		if _, err := io.Copy(dst, image); err != nil {
 			http.Error(w, "Failed to save the uploaded file.", http.StatusInternalServerError)
 			return err
 		}
@@ -145,7 +187,64 @@ func HandlePostImage(w http.ResponseWriter, r *http.Request, _ map[string]string
 
 		return nil
 	})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
 
+func getPostFromRequest(r *http.Request) (model.Post, error) {
+
+	title := r.PostFormValue(postTitleKey)
+	description := r.PostFormValue(postDescriptionKey)
+	minimumFundStr := r.PostFormValue(postMinimumFundKey)
+	deadlineStr := r.PostFormValue(postDeadlineKey)
+	imageFilename := util.GenerateFileName()
+
+	minimumFund, err := decimal.NewFromString(minimumFundStr)
+	if err != nil {
+		return model.Post{}, errors.New("invalid minimum fund format")
+	}
+
+	deadlineDate, err := time.ParseInLocation(time.DateOnly, deadlineStr, time.Local)
+	if err != nil {
+		return model.Post{}, errors.New("invalid date format")
+	}
+
+	return model.Post{
+		Title:        title,
+		Description:  description,
+		MinimumFund:  minimumFund,
+		DeadlineDate: deadlineDate,
+		Image:        imageFilename,
+	}, nil
+}
+
+func getPostDetailFromRequest(r *http.Request) (model.PostDetail, error) {
+
+	title := r.PostFormValue(postTitleKey)
+	description := r.PostFormValue(postDescriptionKey)
+	orderStr := r.PostFormValue(postDetailOrderKey)
+	postIDStr := r.PostFormValue(postDetailPostIDKey)
+
+	imageFilename := util.GenerateFileName()
+
+	order, err := strconv.ParseInt(orderStr, 10, 32)
+	if err != nil {
+		return model.PostDetail{}, errors.New("invalid order format")
+	}
+
+	postID, err := strconv.ParseInt(postIDStr, 10, 64)
+	if err != nil {
+		return model.PostDetail{}, errors.New("invalid post id format")
+	}
+
+	return model.PostDetail{
+		Title:       title,
+		Description: description,
+		Image:       imageFilename,
+		Order:       int32(order),
+		PostID:      postID,
+	}, nil
 }
 
 func HandleImage(w http.ResponseWriter, r *http.Request, params map[string]string) {

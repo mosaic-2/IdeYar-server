@@ -5,7 +5,7 @@ import (
 )
 
 type Server struct {
-	pb.UnimplementedPostServer
+	pb.UnimplementedPostServiceServer
 	hmacSecret []byte
 }
 

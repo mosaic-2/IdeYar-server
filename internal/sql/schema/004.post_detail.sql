@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS post_detail (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	order_c INT NOT NULL,
-	title VARCHAR(255),
+	title TEXT,
 	description TEXT,
 	image TEXT,
 	post_id BIGINT NOT NULL,
