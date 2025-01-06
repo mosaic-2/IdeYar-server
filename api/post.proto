@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 package IdeYarAPI;
 option go_package = "./../pkg/postServicePb";
 
-service Post {
+service PostService {
     rpc GetPost(GetPostRequest) returns (GetPostResponse){
         option (google.api.http) = {
             get: "/api/post/{id}"
@@ -56,7 +56,7 @@ message LandingPost {
 }
 
 message LandingPostsResponse {
-    repeated LandingPost landing_posts = 1;
+    repeated Post posts = 1;
 }
 
 message SearchPostRequest {
@@ -84,17 +84,29 @@ message PostOverview {
     int64 id = 1;
     int64 user_id = 2;
     string username = 3;
-    string user_profile_image = 4;
+    string profile_image_url = 4;
     string title = 5;
     string description = 6;
     string image = 7;
 }
 
 message FundOverview {
+    Post post = 1;
+    string amount = 2;
+}
+
+message Post {
     int64 id = 1;
-    string title = 2;
-    string image = 3;
-    string amount = 4;
+    int64 user_id = 2;
+    string username = 3;
+    string profile_image_url = 4;
+    string title = 5;
+    string description = 6;
+    string minimum_fund = 7;
+    string fund_raised = 8;
+    string deadline_date = 9;
+    string image = 10;
+    google.protobuf.Timestamp created_at = 11;
 }
 
 message PostDetail {
@@ -109,17 +121,8 @@ message GetPostRequest {
 }
 
 message GetPostResponse {
-    int64 id = 1;
-    int64 user_id = 2;
-    string username = 3;
-    string user_profile_image = 4;
-    string title = 5;
-    string minimum_fund = 6;
-    string fund_raised = 7;
-    string deadline_date = 8;
-    string image = 9;
-    google.protobuf.Timestamp created_at = 10;
-    repeated PostDetail post_details = 11;
+    Post post = 1;
+    repeated PostDetail post_details = 2;
 }
 
 message FundPostRequest {
@@ -128,11 +131,11 @@ message FundPostRequest {
 }
 
 message UserFundsResponse {
-    repeated FundOverview fund_overview = 1;
+    repeated FundOverview fund_overviews = 1;
 }
 
 message UserProjectsResponse {
-    repeated PostOverview post_overview = 1;
+    repeated Post posts = 1;
 }
 
 message UserIDProjectsRequest {

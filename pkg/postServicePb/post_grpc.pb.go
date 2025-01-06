@@ -20,19 +20,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Post_GetPost_FullMethodName        = "/IdeYarAPI.Post/GetPost"
-	Post_SearchPost_FullMethodName     = "/IdeYarAPI.Post/SearchPost"
-	Post_LandingPosts_FullMethodName   = "/IdeYarAPI.Post/LandingPosts"
-	Post_FundPost_FullMethodName       = "/IdeYarAPI.Post/FundPost"
-	Post_UserFunds_FullMethodName      = "/IdeYarAPI.Post/UserFunds"
-	Post_UserProjects_FullMethodName   = "/IdeYarAPI.Post/UserProjects"
-	Post_UserIDProjects_FullMethodName = "/IdeYarAPI.Post/UserIDProjects"
+	PostService_GetPost_FullMethodName        = "/IdeYarAPI.PostService/GetPost"
+	PostService_SearchPost_FullMethodName     = "/IdeYarAPI.PostService/SearchPost"
+	PostService_LandingPosts_FullMethodName   = "/IdeYarAPI.PostService/LandingPosts"
+	PostService_FundPost_FullMethodName       = "/IdeYarAPI.PostService/FundPost"
+	PostService_UserFunds_FullMethodName      = "/IdeYarAPI.PostService/UserFunds"
+	PostService_UserProjects_FullMethodName   = "/IdeYarAPI.PostService/UserProjects"
+	PostService_UserIDProjects_FullMethodName = "/IdeYarAPI.PostService/UserIDProjects"
 )
 
-// PostClient is the client API for Post service.
+// PostServiceClient is the client API for PostService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PostClient interface {
+type PostServiceClient interface {
 	GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error)
 	SearchPost(ctx context.Context, in *SearchPostRequest, opts ...grpc.CallOption) (*SearchPostResponse, error)
 	LandingPosts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LandingPostsResponse, error)
@@ -42,88 +42,88 @@ type PostClient interface {
 	UserIDProjects(ctx context.Context, in *UserIDProjectsRequest, opts ...grpc.CallOption) (*UserProjectsResponse, error)
 }
 
-type postClient struct {
+type postServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPostClient(cc grpc.ClientConnInterface) PostClient {
-	return &postClient{cc}
+func NewPostServiceClient(cc grpc.ClientConnInterface) PostServiceClient {
+	return &postServiceClient{cc}
 }
 
-func (c *postClient) GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error) {
+func (c *postServiceClient) GetPost(ctx context.Context, in *GetPostRequest, opts ...grpc.CallOption) (*GetPostResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetPostResponse)
-	err := c.cc.Invoke(ctx, Post_GetPost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_GetPost_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postClient) SearchPost(ctx context.Context, in *SearchPostRequest, opts ...grpc.CallOption) (*SearchPostResponse, error) {
+func (c *postServiceClient) SearchPost(ctx context.Context, in *SearchPostRequest, opts ...grpc.CallOption) (*SearchPostResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SearchPostResponse)
-	err := c.cc.Invoke(ctx, Post_SearchPost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_SearchPost_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postClient) LandingPosts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LandingPostsResponse, error) {
+func (c *postServiceClient) LandingPosts(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LandingPostsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LandingPostsResponse)
-	err := c.cc.Invoke(ctx, Post_LandingPosts_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_LandingPosts_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postClient) FundPost(ctx context.Context, in *FundPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *postServiceClient) FundPost(ctx context.Context, in *FundPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Post_FundPost_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_FundPost_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postClient) UserFunds(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserFundsResponse, error) {
+func (c *postServiceClient) UserFunds(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserFundsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserFundsResponse)
-	err := c.cc.Invoke(ctx, Post_UserFunds_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_UserFunds_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postClient) UserProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserProjectsResponse, error) {
+func (c *postServiceClient) UserProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserProjectsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserProjectsResponse)
-	err := c.cc.Invoke(ctx, Post_UserProjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_UserProjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *postClient) UserIDProjects(ctx context.Context, in *UserIDProjectsRequest, opts ...grpc.CallOption) (*UserProjectsResponse, error) {
+func (c *postServiceClient) UserIDProjects(ctx context.Context, in *UserIDProjectsRequest, opts ...grpc.CallOption) (*UserProjectsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UserProjectsResponse)
-	err := c.cc.Invoke(ctx, Post_UserIDProjects_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, PostService_UserIDProjects_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PostServer is the server API for Post service.
-// All implementations must embed UnimplementedPostServer
+// PostServiceServer is the server API for PostService service.
+// All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility.
-type PostServer interface {
+type PostServiceServer interface {
 	GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error)
 	SearchPost(context.Context, *SearchPostRequest) (*SearchPostResponse, error)
 	LandingPosts(context.Context, *emptypb.Empty) (*LandingPostsResponse, error)
@@ -131,218 +131,218 @@ type PostServer interface {
 	UserFunds(context.Context, *emptypb.Empty) (*UserFundsResponse, error)
 	UserProjects(context.Context, *emptypb.Empty) (*UserProjectsResponse, error)
 	UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error)
-	mustEmbedUnimplementedPostServer()
+	mustEmbedUnimplementedPostServiceServer()
 }
 
-// UnimplementedPostServer must be embedded to have
+// UnimplementedPostServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedPostServer struct{}
+type UnimplementedPostServiceServer struct{}
 
-func (UnimplementedPostServer) GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error) {
+func (UnimplementedPostServiceServer) GetPost(context.Context, *GetPostRequest) (*GetPostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPost not implemented")
 }
-func (UnimplementedPostServer) SearchPost(context.Context, *SearchPostRequest) (*SearchPostResponse, error) {
+func (UnimplementedPostServiceServer) SearchPost(context.Context, *SearchPostRequest) (*SearchPostResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchPost not implemented")
 }
-func (UnimplementedPostServer) LandingPosts(context.Context, *emptypb.Empty) (*LandingPostsResponse, error) {
+func (UnimplementedPostServiceServer) LandingPosts(context.Context, *emptypb.Empty) (*LandingPostsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LandingPosts not implemented")
 }
-func (UnimplementedPostServer) FundPost(context.Context, *FundPostRequest) (*emptypb.Empty, error) {
+func (UnimplementedPostServiceServer) FundPost(context.Context, *FundPostRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FundPost not implemented")
 }
-func (UnimplementedPostServer) UserFunds(context.Context, *emptypb.Empty) (*UserFundsResponse, error) {
+func (UnimplementedPostServiceServer) UserFunds(context.Context, *emptypb.Empty) (*UserFundsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserFunds not implemented")
 }
-func (UnimplementedPostServer) UserProjects(context.Context, *emptypb.Empty) (*UserProjectsResponse, error) {
+func (UnimplementedPostServiceServer) UserProjects(context.Context, *emptypb.Empty) (*UserProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserProjects not implemented")
 }
-func (UnimplementedPostServer) UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error) {
+func (UnimplementedPostServiceServer) UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserIDProjects not implemented")
 }
-func (UnimplementedPostServer) mustEmbedUnimplementedPostServer() {}
-func (UnimplementedPostServer) testEmbeddedByValue()              {}
+func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
+func (UnimplementedPostServiceServer) testEmbeddedByValue()                     {}
 
-// UnsafePostServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PostServer will
+// UnsafePostServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PostServiceServer will
 // result in compilation errors.
-type UnsafePostServer interface {
-	mustEmbedUnimplementedPostServer()
+type UnsafePostServiceServer interface {
+	mustEmbedUnimplementedPostServiceServer()
 }
 
-func RegisterPostServer(s grpc.ServiceRegistrar, srv PostServer) {
-	// If the following call pancis, it indicates UnimplementedPostServer was
+func RegisterPostServiceServer(s grpc.ServiceRegistrar, srv PostServiceServer) {
+	// If the following call pancis, it indicates UnimplementedPostServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Post_ServiceDesc, srv)
+	s.RegisterService(&PostService_ServiceDesc, srv)
 }
 
-func _Post_GetPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_GetPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPostRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).GetPost(ctx, in)
+		return srv.(PostServiceServer).GetPost(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_GetPost_FullMethodName,
+		FullMethod: PostService_GetPost_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).GetPost(ctx, req.(*GetPostRequest))
+		return srv.(PostServiceServer).GetPost(ctx, req.(*GetPostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Post_SearchPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_SearchPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SearchPostRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).SearchPost(ctx, in)
+		return srv.(PostServiceServer).SearchPost(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_SearchPost_FullMethodName,
+		FullMethod: PostService_SearchPost_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).SearchPost(ctx, req.(*SearchPostRequest))
+		return srv.(PostServiceServer).SearchPost(ctx, req.(*SearchPostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Post_LandingPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_LandingPosts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).LandingPosts(ctx, in)
+		return srv.(PostServiceServer).LandingPosts(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_LandingPosts_FullMethodName,
+		FullMethod: PostService_LandingPosts_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).LandingPosts(ctx, req.(*emptypb.Empty))
+		return srv.(PostServiceServer).LandingPosts(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Post_FundPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_FundPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FundPostRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).FundPost(ctx, in)
+		return srv.(PostServiceServer).FundPost(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_FundPost_FullMethodName,
+		FullMethod: PostService_FundPost_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).FundPost(ctx, req.(*FundPostRequest))
+		return srv.(PostServiceServer).FundPost(ctx, req.(*FundPostRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Post_UserFunds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_UserFunds_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).UserFunds(ctx, in)
+		return srv.(PostServiceServer).UserFunds(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_UserFunds_FullMethodName,
+		FullMethod: PostService_UserFunds_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).UserFunds(ctx, req.(*emptypb.Empty))
+		return srv.(PostServiceServer).UserFunds(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Post_UserProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_UserProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).UserProjects(ctx, in)
+		return srv.(PostServiceServer).UserProjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_UserProjects_FullMethodName,
+		FullMethod: PostService_UserProjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).UserProjects(ctx, req.(*emptypb.Empty))
+		return srv.(PostServiceServer).UserProjects(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Post_UserIDProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _PostService_UserIDProjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserIDProjectsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PostServer).UserIDProjects(ctx, in)
+		return srv.(PostServiceServer).UserIDProjects(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Post_UserIDProjects_FullMethodName,
+		FullMethod: PostService_UserIDProjects_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PostServer).UserIDProjects(ctx, req.(*UserIDProjectsRequest))
+		return srv.(PostServiceServer).UserIDProjects(ctx, req.(*UserIDProjectsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Post_ServiceDesc is the grpc.ServiceDesc for Post service.
+// PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Post_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "IdeYarAPI.Post",
-	HandlerType: (*PostServer)(nil),
+var PostService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "IdeYarAPI.PostService",
+	HandlerType: (*PostServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetPost",
-			Handler:    _Post_GetPost_Handler,
+			Handler:    _PostService_GetPost_Handler,
 		},
 		{
 			MethodName: "SearchPost",
-			Handler:    _Post_SearchPost_Handler,
+			Handler:    _PostService_SearchPost_Handler,
 		},
 		{
 			MethodName: "LandingPosts",
-			Handler:    _Post_LandingPosts_Handler,
+			Handler:    _PostService_LandingPosts_Handler,
 		},
 		{
 			MethodName: "FundPost",
-			Handler:    _Post_FundPost_Handler,
+			Handler:    _PostService_FundPost_Handler,
 		},
 		{
 			MethodName: "UserFunds",
-			Handler:    _Post_UserFunds_Handler,
+			Handler:    _PostService_UserFunds_Handler,
 		},
 		{
 			MethodName: "UserProjects",
-			Handler:    _Post_UserProjects_Handler,
+			Handler:    _PostService_UserProjects_Handler,
 		},
 		{
 			MethodName: "UserIDProjects",
-			Handler:    _Post_UserIDProjects_Handler,
+			Handler:    _PostService_UserIDProjects_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

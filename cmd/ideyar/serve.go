@@ -90,7 +90,7 @@ func runGRPCServer() error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize post server: %w", err)
 	}
-	postServicePb.RegisterPostServer(grpcServer, postServer)
+	postServicePb.RegisterPostServiceServer(grpcServer, postServer)
 
 	userProfileServer, err := userProfileImpl.NewServer(secretKey)
 	if err != nil {
@@ -128,7 +128,7 @@ func runHTTPServer(ctx context.Context) error {
 		return fmt.Errorf("failed to register gRPC gateway endpoint: %w", err)
 	}
 
-	err = postServicePb.RegisterPostHandlerFromEndpoint(
+	err = postServicePb.RegisterPostServiceHandlerFromEndpoint(
 		ctx,
 		mux,
 		"localhost"+grpcPort,
