@@ -8,7 +8,7 @@ func ValidateUsername(username string) bool {
 }
 
 func ValidateEmail(mail string) bool {
-	var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	var emailRegex = regexp.MustCompile(`^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`)
 	return emailRegex.MatchString(mail)
 }
 

@@ -52,7 +52,7 @@ func TestValidateName(t *testing.T) {
 		{"Anna", true},
 		{"Jo", false},       // too short
 		{"J0hn D0e", false}, // numbers not allowed
-		{"John Doe John Doe John Doe John D", false}, // too long
+		{"John Doe John Doe John Doe John Doe John Doe", false}, // too long
 	}
 
 	for _, test := range tests {

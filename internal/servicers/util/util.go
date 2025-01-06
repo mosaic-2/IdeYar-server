@@ -3,11 +3,14 @@ package util
 import (
 	"bytes"
 	"context"
-	"github.com/google/uuid"
-	"google.golang.org/grpc/metadata"
+	"fmt"
 	"html/template"
 	"math/rand"
+	"os"
 	"strconv"
+
+	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
 )
 
 type UserIDCtxKey struct{}
@@ -26,6 +29,7 @@ func GenerateVerificationCode() string {
 
 func LoadVerificationEmail(code string) (string, error) {
 
+	fmt.Println(os.Getwd())
 	tmp, err := template.ParseFiles("./internal/servicers/util/templates/verification.gohtml")
 	if err != nil {
 		return "", err
