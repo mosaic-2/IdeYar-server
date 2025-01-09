@@ -1,6 +1,7 @@
 package postImpl
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -91,16 +92,31 @@ func HandlePostCreate(w http.ResponseWriter, r *http.Request, _ map[string]strin
 		dst, err := os.Create(fmt.Sprintf("%s/%s", UploadDir, post.Image))
 		if err != nil {
 			http.Error(w, "Could not create a file.", http.StatusInternalServerError)
-			return err
+			return nil
 		}
 		defer dst.Close()
 
 		if _, err := io.Copy(dst, image); err != nil {
 			http.Error(w, "Failed to save the uploaded file.", http.StatusInternalServerError)
-			return err
+			return nil
 		}
 
-		w.WriteHeader(http.StatusOK)
+		PostID := struct {
+			ID int64 `json:"id"`
+		}{ID: post.ID}
+
+		resp, err := json.Marshal(PostID)
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return nil
+		}
+
+		_, err = w.Write(resp)
+		if err != nil {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return nil
+		}
+
 		return nil
 	})
 	if err != nil {
