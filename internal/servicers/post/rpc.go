@@ -120,20 +120,23 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.LandingPostsResponse, error) {
 	db := dbutil.GormDB(ctx)
 
-	result := []*pb.Post{}
+	posts := []*Post{}
 
 	err := db.Raw(`
-		SELECT p.*
+		SELECT p.*, u.username, u.profile_image_url
 		FROM post p
+		JOIN user_t u ON p.user_id = u.id
 		ORDER BY RANDOM()
 		LIMIT ?
-	`, landingPostsCount).Scan(&result).Error
+	`, landingPostsCount).Scan(&posts).Error
 	if err != nil {
 		return nil, status.Error(codes.Internal, "error while retreiving posts")
 	}
 
+	postsPb := convertPostToPostPb(posts)
+
 	return &pb.LandingPostsResponse{
-		Posts: result,
+		Posts: postsPb,
 	}, nil
 }
 
