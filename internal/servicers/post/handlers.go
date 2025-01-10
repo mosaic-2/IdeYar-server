@@ -142,22 +142,27 @@ func HandlePostDetailsCreate(w http.ResponseWriter, r *http.Request, params map[
 		return
 	}
 
+	hasImage := true
 	image, header, err := r.FormFile(postImageKey)
 	if err != nil {
-		http.Error(w, "Could not get uploaded file.", http.StatusBadRequest)
-		return
-	}
-	defer image.Close()
-
-	if !strings.HasPrefix(header.Header.Get("Content-Type"), "image/") {
-		http.Error(w, "The uploaded file must be an image.", http.StatusBadRequest)
-		return
+		if errors.Is(err, http.ErrMissingFile) {
+			hasImage = false
+		} else {
+			http.Error(w, "Could not get uploaded file.", http.StatusBadRequest)
+			return
+		}
+	} else {
+		defer image.Close()
+		if !strings.HasPrefix(header.Header.Get("Content-Type"), "image/") {
+			http.Error(w, "The uploaded file must be an image.", http.StatusBadRequest)
+			return
+		}
 	}
 
 	tx := dbutil.GormDB(r.Context())
 
 	err = tx.Transaction(func(tx *gorm.DB) error {
-		postDetail, err := getPostDetailFromRequest(r)
+		postDetail, err := getPostDetailFromRequest(r, hasImage)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return nil
@@ -187,16 +192,18 @@ func HandlePostDetailsCreate(w http.ResponseWriter, r *http.Request, params map[
 		}
 
 		// Create and write the file
-		dst, err := os.Create(fmt.Sprintf("%s/%s", UploadDir, postDetail.Image))
-		if err != nil {
-			http.Error(w, "Could not create a file.", http.StatusInternalServerError)
-			return err
-		}
-		defer dst.Close()
+		if hasImage {
+			dst, err := os.Create(fmt.Sprintf("%s/%s", UploadDir, postDetail.Image))
+			if err != nil {
+				http.Error(w, "Could not create a file.", http.StatusInternalServerError)
+				return err
+			}
+			defer dst.Close()
 
-		if _, err := io.Copy(dst, image); err != nil {
-			http.Error(w, "Failed to save the uploaded file.", http.StatusInternalServerError)
-			return err
+			if _, err := io.Copy(dst, image); err != nil {
+				http.Error(w, "Failed to save the uploaded file.", http.StatusInternalServerError)
+				return err
+			}
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -235,14 +242,17 @@ func getPostFromRequest(r *http.Request) (model.Post, error) {
 	}, nil
 }
 
-func getPostDetailFromRequest(r *http.Request) (model.PostDetail, error) {
+func getPostDetailFromRequest(r *http.Request, hasImage bool) (model.PostDetail, error) {
 
 	title := r.PostFormValue(postTitleKey)
 	description := r.PostFormValue(postDescriptionKey)
 	orderStr := r.PostFormValue(postDetailOrderKey)
 	postIDStr := r.PostFormValue(postDetailPostIDKey)
 
-	imageFilename := util.GenerateFileName()
+	var imageFilename string
+	if hasImage {
+		imageFilename = util.GenerateFileName()
+	}
 
 	order, err := strconv.ParseInt(orderStr, 10, 32)
 	if err != nil {
