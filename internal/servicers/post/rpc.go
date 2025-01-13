@@ -99,15 +99,16 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 }
 
 func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb.SearchPostResponse, error) {
-
 	db := dbutil.GormDB(ctx)
 
 	title := req.GetTitle()
 	offset := req.GetPage() * 20
 
-	result := []*pb.PostOverview{}
+	var result []*pb.PostOverview
 
-	err := db.Raw(`
+	filter := req.GetFilter()
+	if filter == nil {
+		err := db.Raw(`
 		SELECT p.id, p.title, pd.image
 		FROM post p LEFT JOIN (
 			SELECT pd.post_id, pd.image 
@@ -117,10 +118,35 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 		ORDER BY SIMILARITY(p.title, ?) DESC
 		LIMIT 20 
 		OFFSET ?
-	`, title, offset).
-		Scan(&result).Error
-	if err != nil {
-		return nil, status.Error(codes.Internal, "error while retreiving posts")
+	`, title, offset).Scan(&result).Error
+		if err != nil {
+			return nil, status.Error(codes.Internal, "error while retrieving posts")
+		}
+	} else {
+		query := db.Table("post p").
+			Select("p.id, p.title, pd.image").
+			Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id").
+			Where("SIMILARITY(p.title, ?) > 0", title)
+
+		cats := filter.GetCategories()
+		if len(cats) > 0 {
+			query = query.Where("p.category IN (?)", cats)
+		}
+
+		orderClause := "SIMILARITY(p.title, ?) DESC"
+		order := filter.GetSortBy()
+		if order == pb.SearchPostRequest_Filters_CREATED_TIME {
+			orderClause = "p.created_at DESC"
+		} else if order == pb.SearchPostRequest_Filters_DEADLINE {
+			orderClause = "p.deadline_date ASC"
+		}
+
+		query = query.Order(orderClause).Limit(20).Offset(int(offset))
+
+		err := query.Scan(&result).Error
+		if err != nil {
+			return nil, status.Error(codes.Internal, "error while retrieving posts with filters")
+		}
 	}
 
 	return &pb.SearchPostResponse{
