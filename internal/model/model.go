@@ -45,6 +45,7 @@ type Post struct {
 	FundRaised   decimal.Decimal
 	DeadlineDate time.Time
 	CreatedAt    time.Time
+	Category     string
 }
 
 func (Post) TableName() string {

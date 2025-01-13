@@ -26,6 +26,7 @@ const (
 	postDescriptionKey = "description"
 	postMinimumFundKey = "minimumFund"
 	postDeadlineKey    = "deadline"
+	postCategoryKey    = "category"
 )
 
 const (
@@ -221,6 +222,7 @@ func getPostFromRequest(r *http.Request) (model.Post, error) {
 	description := r.PostFormValue(postDescriptionKey)
 	minimumFundStr := r.PostFormValue(postMinimumFundKey)
 	deadlineStr := r.PostFormValue(postDeadlineKey)
+	category := r.PostFormValue(postCategoryKey)
 	imageFilename := util.GenerateFileName()
 
 	minimumFund, err := decimal.NewFromString(minimumFundStr)
@@ -239,6 +241,7 @@ func getPostFromRequest(r *http.Request) (model.Post, error) {
 		MinimumFund:  minimumFund,
 		DeadlineDate: deadlineDate,
 		Image:        imageFilename,
+		Category:     category,
 	}, nil
 }
 
