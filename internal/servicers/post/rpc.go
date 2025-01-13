@@ -291,6 +291,60 @@ func (s *Server) UserIDProjects(ctx context.Context, req *pb.UserIDProjectsReque
 	return &pb.UserProjectsResponse{Posts: userProjects}, nil
 }
 
+func (s *Server) BookmarkPost(ctx context.Context, req *pb.BookmarkPostRequest) (*emptypb.Empty, error) {
+	db := dbutil.GormDB(ctx)
+
+	userID := util.GetUserIDFromCtx(ctx)
+	postID := req.GetPostId()
+
+	bookmark := model.Bookmark{
+		UserID: userID,
+		PostID: postID,
+	}
+
+	var existingBookmark model.Bookmark
+	err := db.Where("user_id = ? AND post_id = ?", userID, postID).First(&existingBookmark).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, status.Errorf(codes.Internal, "error accessing the database")
+	}
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = db.Create(&bookmark).Error
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error while bookmarking")
+		}
+	} else {
+		err = db.Delete(&existingBookmark).Error
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error while removing bookmark")
+		}
+	}
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *Server) UserBookmarks(ctx context.Context, _ *emptypb.Empty) (*pb.UserBookmarksResponse, error) {
+	db := dbutil.GormDB(ctx)
+
+	userID := util.GetUserIDFromCtx(ctx)
+
+	userBookmarks := []*Post{}
+
+	err := db.Table("post AS p").
+		Joins("JOIN bookmark AS b ON p.id = b.post_id").
+		Joins("JOIN user_t AS u ON u.id = p.user_id").
+		Where("b.user_id = ?", userID).
+		Select("p.*, u.id AS user_id, u.username, u.profile_image_url").
+		Scan(&userBookmarks).Error
+	if err != nil {
+		return nil, err
+	}
+
+	posts := convertPostToPostPb(userBookmarks)
+	return &pb.UserBookmarksResponse{Posts: posts}, nil
+}
+
 func validatePost(post model.Post) error {
 	if post.Title == "" {
 		return status.Errorf(codes.InvalidArgument, "post title can not be empty")

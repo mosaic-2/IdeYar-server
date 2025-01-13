@@ -27,6 +27,8 @@ const (
 	PostService_UserFunds_FullMethodName      = "/IdeYarAPI.PostService/UserFunds"
 	PostService_UserProjects_FullMethodName   = "/IdeYarAPI.PostService/UserProjects"
 	PostService_UserIDProjects_FullMethodName = "/IdeYarAPI.PostService/UserIDProjects"
+	PostService_BookmarkPost_FullMethodName   = "/IdeYarAPI.PostService/BookmarkPost"
+	PostService_UserBookmarks_FullMethodName  = "/IdeYarAPI.PostService/UserBookmarks"
 )
 
 // PostServiceClient is the client API for PostService service.
@@ -40,6 +42,8 @@ type PostServiceClient interface {
 	UserFunds(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserFundsResponse, error)
 	UserProjects(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserProjectsResponse, error)
 	UserIDProjects(ctx context.Context, in *UserIDProjectsRequest, opts ...grpc.CallOption) (*UserProjectsResponse, error)
+	BookmarkPost(ctx context.Context, in *BookmarkPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UserBookmarks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserBookmarksResponse, error)
 }
 
 type postServiceClient struct {
@@ -120,6 +124,26 @@ func (c *postServiceClient) UserIDProjects(ctx context.Context, in *UserIDProjec
 	return out, nil
 }
 
+func (c *postServiceClient) BookmarkPost(ctx context.Context, in *BookmarkPostRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, PostService_BookmarkPost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *postServiceClient) UserBookmarks(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserBookmarksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserBookmarksResponse)
+	err := c.cc.Invoke(ctx, PostService_UserBookmarks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PostServiceServer is the server API for PostService service.
 // All implementations must embed UnimplementedPostServiceServer
 // for forward compatibility.
@@ -131,6 +155,8 @@ type PostServiceServer interface {
 	UserFunds(context.Context, *emptypb.Empty) (*UserFundsResponse, error)
 	UserProjects(context.Context, *emptypb.Empty) (*UserProjectsResponse, error)
 	UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error)
+	BookmarkPost(context.Context, *BookmarkPostRequest) (*emptypb.Empty, error)
+	UserBookmarks(context.Context, *emptypb.Empty) (*UserBookmarksResponse, error)
 	mustEmbedUnimplementedPostServiceServer()
 }
 
@@ -161,6 +187,12 @@ func (UnimplementedPostServiceServer) UserProjects(context.Context, *emptypb.Emp
 }
 func (UnimplementedPostServiceServer) UserIDProjects(context.Context, *UserIDProjectsRequest) (*UserProjectsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserIDProjects not implemented")
+}
+func (UnimplementedPostServiceServer) BookmarkPost(context.Context, *BookmarkPostRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BookmarkPost not implemented")
+}
+func (UnimplementedPostServiceServer) UserBookmarks(context.Context, *emptypb.Empty) (*UserBookmarksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserBookmarks not implemented")
 }
 func (UnimplementedPostServiceServer) mustEmbedUnimplementedPostServiceServer() {}
 func (UnimplementedPostServiceServer) testEmbeddedByValue()                     {}
@@ -309,6 +341,42 @@ func _PostService_UserIDProjects_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PostService_BookmarkPost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BookmarkPostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).BookmarkPost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_BookmarkPost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).BookmarkPost(ctx, req.(*BookmarkPostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PostService_UserBookmarks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PostServiceServer).UserBookmarks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PostService_UserBookmarks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PostServiceServer).UserBookmarks(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PostService_ServiceDesc is the grpc.ServiceDesc for PostService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -343,6 +411,14 @@ var PostService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UserIDProjects",
 			Handler:    _PostService_UserIDProjects_Handler,
+		},
+		{
+			MethodName: "BookmarkPost",
+			Handler:    _PostService_BookmarkPost_Handler,
+		},
+		{
+			MethodName: "UserBookmarks",
+			Handler:    _PostService_UserBookmarks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

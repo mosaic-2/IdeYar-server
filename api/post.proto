@@ -45,6 +45,17 @@ service PostService {
             get: "/api/user-projects/{id}"
         };  
     }
+    rpc BookmarkPost(BookmarkPostRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/bookmark/{post_id}"
+            body: "*"
+        };
+    }
+    rpc UserBookmarks(google.protobuf.Empty) returns (UserBookmarksResponse) {
+        option (google.api.http) = {
+            get: "/api/user-bookmarks"
+        };
+    }
 }
 
 message LandingPost {
@@ -140,4 +151,12 @@ message UserProjectsResponse {
 
 message UserIDProjectsRequest {
     int64 id = 1;
+}
+
+message BookmarkPostRequest {
+    int64 post_id = 2;
+}
+
+message UserBookmarksResponse {
+    repeated Post posts = 1;
 }
