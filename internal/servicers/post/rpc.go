@@ -69,7 +69,7 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		ProfileImageUrl: post.ProfileImageUrl,
 	}
 
-	postDetails := []*pb.PostDetail{}
+	postDetails := []*model.PostDetail{}
 
 	err = db.Model(model.PostDetail{}).
 		Where("post_id = ?", postID).
@@ -80,9 +80,20 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		}
 	}
 
+	postDetailsPb := []*pb.PostDetail{}
+
+	for _, postDetail := range postDetails {
+		postDetailsPb = append(postDetailsPb, &pb.PostDetail{
+			Title:       postDetail.Title,
+			Description: postDetail.Description,
+			Image:       &postDetail.Image,
+			Order:       postDetail.Order,
+		})
+	}
+
 	return &pb.GetPostResponse{
 		Post:        postPb,
-		PostDetails: postDetails,
+		PostDetails: postDetailsPb,
 	}, nil
 
 }
