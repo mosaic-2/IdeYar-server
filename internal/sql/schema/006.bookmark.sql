@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS bookmark (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    post_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id)
+    REFERENCES user_t(id),
+    FOREIGN KEY (post_id)
+    REFERENCES post(id)
+);

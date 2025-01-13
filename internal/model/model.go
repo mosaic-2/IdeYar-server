@@ -71,3 +71,17 @@ type Fund struct {
 	PostID int64
 	Amount decimal.Decimal
 }
+
+func (Fund) TableName() string {
+	return "fund"
+}
+
+type Bookmark struct {
+	ID     int64
+	UserID int64
+	PostID int64
+}
+
+func (Bookmark) TableName() string {
+	return "bookmark"
+}
