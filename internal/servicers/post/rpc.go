@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mosaic-2/IdeYar-server/internal/dbutil"
@@ -100,58 +101,43 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 
 func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb.SearchPostResponse, error) {
 	db := dbutil.GormDB(ctx)
-
 	title := req.GetTitle()
-	offset := req.GetPage() * 20
+	offset := int(req.GetPage()) * 20
 
 	var result []*pb.PostOverview
-
 	filter := req.GetFilter()
-	if filter == nil {
-		err := db.Raw(`
-		SELECT p.id, p.title, pd.image
-		FROM post p LEFT JOIN (
-			SELECT pd.post_id, pd.image 
-			FROM post_detail pd
-			WHERE pd.order_c = 0
-		) AS pd ON p.id = pd.post_id
-		ORDER BY SIMILARITY(p.title, ?) DESC
-		LIMIT 20 
-		OFFSET ?
-	`, title, offset).Scan(&result).Error
-		if err != nil {
-			return nil, status.Error(codes.Internal, "error while retrieving posts")
+
+	query := db.Table("post AS p").
+		Select("p.id, p.title, pd.image").
+		Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id").
+		Where("SIMILARITY(p.title, ?) > 0", title)
+
+	if filter != nil {
+		categories := filter.GetCategories()
+		if len(categories) > 0 {
+			query = query.Where("p.category IN (?)", categories)
+		}
+
+		// FIXME: This code has possible sql injection
+		switch filter.GetSortBy() {
+		case pb.SearchPostRequest_Filters_CREATED_TIME:
+			query = query.Order("p.created_at DESC")
+		case pb.SearchPostRequest_Filters_DEADLINE:
+			query = query.Order("p.deadline_date ASC")
+		default:
+			query = query.Order(fmt.Sprintf("SIMILARITY(p.title, '%s') DESC", title))
 		}
 	} else {
-		query := db.Table("post p").
-			Select("p.id, p.title, pd.image").
-			Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id").
-			Where("SIMILARITY(p.title, ?) > 0", title)
-
-		cats := filter.GetCategories()
-		if len(cats) > 0 {
-			query = query.Where("p.category IN (?)", cats)
-		}
-
-		orderClause := "SIMILARITY(p.title, ?) DESC"
-		order := filter.GetSortBy()
-		if order == pb.SearchPostRequest_Filters_CREATED_TIME {
-			orderClause = "p.created_at DESC"
-		} else if order == pb.SearchPostRequest_Filters_DEADLINE {
-			orderClause = "p.deadline_date ASC"
-		}
-
-		query = query.Order(orderClause).Limit(20).Offset(int(offset))
-
-		err := query.Scan(&result).Error
-		if err != nil {
-			return nil, status.Error(codes.Internal, "error while retrieving posts with filters")
-		}
+		query = query.Order(fmt.Sprintf("SIMILARITY(p.title, '%s') DESC", title))
 	}
 
-	return &pb.SearchPostResponse{
-		PostOverview: result,
-	}, nil
+	query = query.Limit(20).Offset(offset)
+
+	if err := query.Scan(&result).Error; err != nil {
+		return nil, status.Errorf(codes.Internal, "error retrieving posts: %v", err)
+	}
+
+	return &pb.SearchPostResponse{PostOverview: result}, nil
 }
 
 func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.LandingPostsResponse, error) {
