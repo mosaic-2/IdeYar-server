@@ -83,10 +83,8 @@ func (s *Server) GetProfileInfo(ctx context.Context, in *pb.GetProfileInfoReques
 		return nil, status.Errorf(codes.Internal, "failed to retrieve user profile: %v", err)
 	}
 
-	var birthday string
-	if user.Birthday != nil {
-		birthday = user.Birthday.Format("2006-01-02")
-	} else {
+	birthday := user.Birthday.Format("2006-01-02")
+	if birthday == "0001-01-01" {
 		birthday = "YYYY-MM-DD"
 	}
 

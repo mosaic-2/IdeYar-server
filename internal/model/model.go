@@ -26,7 +26,7 @@ type User struct {
 	Password        string
 	CreatedAt       time.Time
 	Bio             string
-	Birthday        *time.Time
+	Birthday        time.Time
 	Phone           string
 	ProfileImageURL string
 }
