@@ -63,6 +63,7 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		Image:           post.Image,
 		MinimumFund:     post.MinimumFund.String(),
 		FundRaised:      post.FundRaised.String(),
+		Description:     post.Description,
 		DeadlineDate:    post.DeadlineDate.Format(time.DateOnly),
 		CreatedAt:       timestamppb.New(post.CreatedAt),
 		UserId:          post.UserID,

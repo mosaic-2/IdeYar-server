@@ -21,20 +21,14 @@ import (
 const UploadDir = "images"
 
 const (
-	postTitleKey       = "title"
-	postImageKey       = "image"
-	postDescriptionKey = "description"
-	postMinimumFundKey = "minimumFund"
-	postDeadlineKey    = "deadline"
-	postCategoryKey    = "category"
-)
-
-const (
-	postDetailTitleKey       = "title"
-	postDetailDescriptionKey = "description"
-	postDetailOrderKey       = "order"
-	postDetailImageKey       = "image"
-	postDetailPostIDKey      = "postID"
+	postTitleKey        = "title"
+	postImageKey        = "image"
+	postDescriptionKey  = "description"
+	postMinimumFundKey  = "minimumFund"
+	postDeadlineKey     = "deadline"
+	postCategoryKey     = "category"
+	postDetailOrderKey  = "order"
+	postDetailPostIDKey = "postID"
 )
 
 func HandlePostCreate(w http.ResponseWriter, r *http.Request, _ map[string]string) {
@@ -217,7 +211,6 @@ func HandlePostDetailsCreate(w http.ResponseWriter, r *http.Request, params map[
 }
 
 func getPostFromRequest(r *http.Request) (model.Post, error) {
-
 	title := r.PostFormValue(postTitleKey)
 	description := r.PostFormValue(postDescriptionKey)
 	minimumFundStr := r.PostFormValue(postMinimumFundKey)
@@ -246,7 +239,6 @@ func getPostFromRequest(r *http.Request) (model.Post, error) {
 }
 
 func getPostDetailFromRequest(r *http.Request, hasImage bool) (model.PostDetail, error) {
-
 	title := r.PostFormValue(postTitleKey)
 	description := r.PostFormValue(postDescriptionKey)
 	orderStr := r.PostFormValue(postDetailOrderKey)
