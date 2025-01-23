@@ -104,9 +104,9 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	db := dbutil.GormDB(ctx)
 	title := req.GetTitle()
 	offset := int(req.GetPage()) * 20
+	filter := req.GetFilter()
 
 	var result []*pb.PostOverview
-	filter := req.GetFilter()
 
 	query := db.Table("post AS p").
 		Select("p.id, p.title, pd.image").
@@ -130,7 +130,7 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 		default:
 			query = query.Order(fmt.Sprintf("SIMILARITY(p.title, '%s') DESC", title))
 		}
-	} else {
+	} else if title != "" {
 		query = query.Order(fmt.Sprintf("SIMILARITY(p.title, '%s') DESC", title))
 	}
 
