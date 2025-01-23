@@ -54,7 +54,7 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, status.Error(codes.NotFound, "could not find post")
 		}
-		return nil, status.Error(codes.Internal, "error retreiving post")
+		return nil, status.Error(codes.Internal, "error retrieving post")
 	}
 
 	postPb := &pb.Post{
@@ -77,7 +77,7 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		Scan(&postDetails).Error
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, status.Error(codes.Internal, "error retreiving post")
+			return nil, status.Error(codes.Internal, "error retrieving post")
 		}
 	}
 
@@ -140,7 +140,7 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	return &pb.SearchPostResponse{PostOverview: result}, nil
 }
 
-func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.LandingPostsResponse, error) {
+func (s *Server) LandingPosts(ctx context.Context, _ *emptypb.Empty) (*pb.LandingPostsResponse, error) {
 	db := dbutil.GormDB(ctx)
 
 	posts := []*Post{}
@@ -153,7 +153,7 @@ func (s *Server) LandingPosts(ctx context.Context, in *emptypb.Empty) (*pb.Landi
 		LIMIT ?
 	`, landingPostsCount).Scan(&posts).Error
 	if err != nil {
-		return nil, status.Error(codes.Internal, "error while retreiving posts")
+		return nil, status.Error(codes.Internal, "error while retrieving posts")
 	}
 
 	postsPb := convertPostToPostPb(posts)
@@ -206,7 +206,7 @@ func (s *Server) FundPost(ctx context.Context, req *pb.FundPostRequest) (*emptyp
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) UserFunds(ctx context.Context, req *emptypb.Empty) (*pb.UserFundsResponse, error) {
+func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFundsResponse, error) {
 
 	db := dbutil.GormDB(ctx)
 
@@ -251,7 +251,7 @@ func (s *Server) UserFunds(ctx context.Context, req *emptypb.Empty) (*pb.UserFun
 	return &pb.UserFundsResponse{FundOverviews: userFundsPb}, nil
 }
 
-func (s *Server) UserProjects(ctx context.Context, req *emptypb.Empty) (*pb.UserProjectsResponse, error) {
+func (s *Server) UserProjects(ctx context.Context, _ *emptypb.Empty) (*pb.UserProjectsResponse, error) {
 	db := dbutil.GormDB(ctx)
 
 	userID := util.GetUserIDFromCtx(ctx)
