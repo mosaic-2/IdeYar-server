@@ -110,9 +110,11 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 
 	query := db.Table("post AS p").
 		Select("p.id, p.title, pd.image").
-		Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id").
-		Where("SIMILARITY(p.title, ?) > 0", title)
+		Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id")
 
+	if title != "" {
+		query.Where("SIMILARITY(p.title, ?) > 0", title)
+	}
 	if filter != nil {
 		categories := filter.GetCategories()
 		if len(categories) > 0 {
