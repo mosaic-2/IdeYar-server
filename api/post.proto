@@ -88,17 +88,7 @@ message SearchPostRequest {
 }
 
 message SearchPostResponse {
-    repeated PostOverview post_overview = 1;
-}
-
-message PostOverview {
-    int64 id = 1;
-    int64 user_id = 2;
-    string username = 3;
-    string profile_image_url = 4;
-    string title = 5;
-    string description = 6;
-    string image = 7;
+    repeated Post posts = 1;
 }
 
 message FundOverview {

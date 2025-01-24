@@ -140,9 +140,9 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "error retrieving posts: %v", err)
 	}
 
-	result := convertPostToPostOverviewPb(posts)
+	result := convertPostToPostPb(posts)
 
-	return &pb.SearchPostResponse{PostOverview: result}, nil
+	return &pb.SearchPostResponse{Posts: result}, nil
 }
 
 func (s *Server) LandingPosts(ctx context.Context, _ *emptypb.Empty) (*pb.LandingPostsResponse, error) {
@@ -403,25 +403,6 @@ func convertPostToPostPb(posts []*Post) []*pb.Post {
 			DeadlineDate:    post.DeadlineDate.Local().Format(time.DateOnly),
 			Image:           post.Image,
 			CreatedAt:       timestamppb.New(post.CreatedAt),
-		})
-	}
-
-	return result
-}
-
-func convertPostToPostOverviewPb(posts []*Post) []*pb.PostOverview {
-
-	var result []*pb.PostOverview
-
-	for _, post := range posts {
-		result = append(result, &pb.PostOverview{
-			Id:              post.ID,
-			UserId:          post.ID,
-			Username:        post.Username,
-			ProfileImageUrl: post.ProfileImageUrl,
-			Title:           post.Title,
-			Description:     post.Description,
-			Image:           post.Image,
 		})
 	}
 
