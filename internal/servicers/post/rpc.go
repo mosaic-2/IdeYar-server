@@ -109,8 +109,7 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	var posts []*Post
 
 	query := db.Table("post AS p").
-		Select("p.id, p.title, p.description,  pd.image").
-		Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id").
+		Select("p.*, u.username, u.profile_image_url").
 		Joins("JOIN user_t AS u ON p.user_id = u.id")
 
 	if title != "" {

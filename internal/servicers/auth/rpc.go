@@ -150,9 +150,6 @@ func (s *Server) CodeVerification(ctx context.Context, req *pb.CodeVerificationR
 	defer func(tx *gorm.DB) {
 		_ = tx.Commit()
 	}(tx)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
 
 	var duplicateUsername bool
 	err = tx.Raw(`
