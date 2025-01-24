@@ -71,7 +71,7 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		ProfileImageUrl: post.ProfileImageUrl,
 	}
 
-	postDetails := []*model.PostDetail{}
+	var postDetails []*model.PostDetail
 
 	err = db.Model(model.PostDetail{}).
 		Where("post_id = ?", postID).
@@ -82,7 +82,7 @@ func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPo
 		}
 	}
 
-	postDetailsPb := []*pb.PostDetail{}
+	var postDetailsPb []*pb.PostDetail
 
 	for _, postDetail := range postDetails {
 		postDetailsPb = append(postDetailsPb, &pb.PostDetail{
@@ -106,11 +106,12 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	offset := int(req.GetPage()) * 20
 	filter := req.GetFilter()
 
-	var result []*pb.PostOverview
+	var posts []*Post
 
 	query := db.Table("post AS p").
-		Select("p.id, p.title, pd.image").
-		Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id")
+		Select("p.id, p.title, p.description,  pd.image").
+		Joins("LEFT JOIN (SELECT pd.post_id, pd.image FROM post_detail pd WHERE pd.order_c = 0) AS pd ON p.id = pd.post_id").
+		Joins("JOIN user_t AS u ON p.user_id = u.id")
 
 	if title != "" {
 		query.Where("SIMILARITY(p.title, ?) > 0", title)
@@ -136,9 +137,11 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 
 	query = query.Limit(20).Offset(offset)
 
-	if err := query.Scan(&result).Error; err != nil {
+	if err := query.Scan(&posts).Error; err != nil {
 		return nil, status.Errorf(codes.Internal, "error retrieving posts: %v", err)
 	}
+
+	result := convertPostToPostOverviewPb(posts)
 
 	return &pb.SearchPostResponse{PostOverview: result}, nil
 }
@@ -146,7 +149,7 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 func (s *Server) LandingPosts(ctx context.Context, _ *emptypb.Empty) (*pb.LandingPostsResponse, error) {
 	db := dbutil.GormDB(ctx)
 
-	posts := []*Post{}
+	var posts []*Post
 
 	err := db.Raw(`
 		SELECT p.*, u.username, u.profile_image_url
@@ -386,7 +389,7 @@ func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.Post, error) {
 
 func convertPostToPostPb(posts []*Post) []*pb.Post {
 
-	result := []*pb.Post{}
+	var result []*pb.Post
 
 	for _, post := range posts {
 		result = append(result, &pb.Post{
@@ -401,6 +404,25 @@ func convertPostToPostPb(posts []*Post) []*pb.Post {
 			DeadlineDate:    post.DeadlineDate.Local().Format(time.DateOnly),
 			Image:           post.Image,
 			CreatedAt:       timestamppb.New(post.CreatedAt),
+		})
+	}
+
+	return result
+}
+
+func convertPostToPostOverviewPb(posts []*Post) []*pb.PostOverview {
+
+	var result []*pb.PostOverview
+
+	for _, post := range posts {
+		result = append(result, &pb.PostOverview{
+			Id:              post.ID,
+			UserId:          post.ID,
+			Username:        post.Username,
+			ProfileImageUrl: post.ProfileImageUrl,
+			Title:           post.Title,
+			Description:     post.Description,
+			Image:           post.Image,
 		})
 	}
 
