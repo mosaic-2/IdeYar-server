@@ -218,10 +218,10 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 
 	userID := util.GetUserIDFromCtx(ctx)
 
-	userFunds := []struct {
+	var userFunds []struct {
 		Post
 		Amount decimal.Decimal
-	}{}
+	}
 
 	err := db.Table("fund AS f").
 		Joins("JOIN post p ON f.post_id = p.id").
@@ -233,7 +233,7 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
-	userFundsPb := []*pb.FundOverview{}
+	var userFundsPb []*pb.FundOverview
 
 	for _, fund := range userFunds {
 		userFundsPb = append(userFundsPb, &pb.FundOverview{
@@ -321,7 +321,7 @@ func (s *Server) UserBookmarks(ctx context.Context, _ *emptypb.Empty) (*pb.UserB
 
 	userID := util.GetUserIDFromCtx(ctx)
 
-	userBookmarks := []*Post{}
+	var userBookmarks []*Post
 
 	err := db.Table("post AS p").
 		Joins("JOIN bookmark AS b ON p.id = b.post_id").
@@ -373,7 +373,7 @@ func hasCreateAccessPostDetail(tx *gorm.DB, postDetail model.PostDetail, userID 
 
 func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.Post, error) {
 
-	userProjects := []*Post{}
+	var userProjects []*Post
 
 	err := tx.Table("post AS p").
 		Joins("JOIN user_t AS u ON p.user_id = u.id").
