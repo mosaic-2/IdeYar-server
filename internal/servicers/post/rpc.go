@@ -35,6 +35,7 @@ type Post struct {
 	FundRaised      decimal.Decimal
 	DeadlineDate    time.Time
 	CreatedAt       time.Time
+	IsBookmarked    bool
 }
 
 func (s *Server) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostResponse, error) {
@@ -106,11 +107,14 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	offset := int(req.GetPage()) * 20
 	filter := req.GetFilter()
 
+	userID := util.GetUserIDFromCtx(ctx)
+
 	var posts []*Post
 
 	query := db.Table("post AS p").
-		Select("p.*, u.username, u.profile_image_url").
-		Joins("JOIN user_t AS u ON p.user_id = u.id")
+		Select("p.*, u.username, u.profile_image_url, CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS is_bookmarked").
+		Joins("JOIN user_t AS u ON p.user_id = u.id").
+		Joins("LEFT JOIN bookmark b ON b.post_id = p.id AND b.user_id = ?", userID)
 
 	if title != "" {
 		query.Where("SIMILARITY(p.title, ?) > 0", title)
@@ -227,8 +231,7 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 
 	var userFunds []struct {
 		Post
-		Amount       decimal.Decimal
-		isBookmarked bool
+		Amount decimal.Decimal
 	}
 
 	err := db.Table("fund AS f").
@@ -258,7 +261,7 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 				DeadlineDate:    fund.DeadlineDate.Format(time.DateOnly),
 				Image:           fund.Image,
 				CreatedAt:       timestamppb.New(fund.DeadlineDate),
-				IsBookmarked:    fund.isBookmarked,
+				IsBookmarked:    fund.IsBookmarked,
 			},
 			Amount: fund.Amount.String(),
 		})
@@ -387,8 +390,9 @@ func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.Post, error) {
 
 	err := tx.Table("post AS p").
 		Joins("JOIN user_t AS u ON p.user_id = u.id").
+		Joins("LEFT JOIN bookmark b ON b.post_id = p.id AND b.user_id = ?", userID).
 		Where("p.user_id = ?", userID).
-		Select("p.*, u.id AS user_id, u.username, u.profile_image_url").
+		Select("p.*, u.id AS user_id, u.username, u.profile_image_url, CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS is_bookmarked").
 		Scan(&userProjects).Error
 	if err != nil {
 		return nil, err
@@ -414,7 +418,7 @@ func convertPostToPostPb(posts []*Post) []*pb.Post {
 			DeadlineDate:    post.DeadlineDate.Local().Format(time.DateOnly),
 			Image:           post.Image,
 			CreatedAt:       timestamppb.New(post.CreatedAt),
-			IsBookmarked:    false,
+			IsBookmarked:    post.IsBookmarked,
 		})
 	}
 
