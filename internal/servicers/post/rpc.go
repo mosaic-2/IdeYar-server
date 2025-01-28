@@ -112,7 +112,7 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 	var posts []*Post
 
 	query := db.Table("post AS p").
-		Select(`p.*, f.amount, u.username, u.profile_image_url, 
+		Select(`p.*, u.username, u.profile_image_url, 
             CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS "IsBookmarked"`).
 		Joins("JOIN user_t AS u ON p.user_id = u.id").
 		Joins("LEFT JOIN bookmark b ON b.post_id = p.id AND b.user_id = ?", userID)
@@ -394,7 +394,7 @@ func fetchUserIDProjects(userID int64, tx *gorm.DB) ([]*pb.Post, error) {
 		Joins("JOIN user_t AS u ON p.user_id = u.id").
 		Joins("LEFT JOIN bookmark b ON b.post_id = p.id AND b.user_id = ?", userID).
 		Where("p.user_id = ?", userID).
-		Select(`p.*, f.amount, u.username, u.profile_image_url, 
+		Select(`p.*, u.username, u.profile_image_url, 
             CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS "IsBookmarked"`).
 		Scan(&userProjects).Error
 	if err != nil {
