@@ -239,7 +239,8 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 		Joins("JOIN user_t u ON p.user_id = u.id").
 		Joins("LEFT JOIN bookmark b ON b.post_id = p.id AND b.user_id = ?", userID).
 		Where("f.user_id = ?", userID).
-		Select("p.*, f.amount, u.username, u.profile_image_url, CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS is_bookmarked").
+		Select(`p.*, f.amount, u.username, u.profile_image_url, 
+            CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS "IsBookmarked"`).
 		Scan(&userFunds).Error
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal server error")
