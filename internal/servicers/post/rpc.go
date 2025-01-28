@@ -227,14 +227,16 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 
 	var userFunds []struct {
 		Post
-		Amount decimal.Decimal
+		Amount       decimal.Decimal
+		isBookmarked bool
 	}
 
 	err := db.Table("fund AS f").
 		Joins("JOIN post p ON f.post_id = p.id").
 		Joins("JOIN user_t u ON p.user_id = u.id").
+		Joins("LEFT JOIN bookmark b ON b.post_id = p.id AND b.user_id = ?", userID).
 		Where("f.user_id = ?", userID).
-		Select("p.*, f.amount, u.username, u.profile_image_url").
+		Select("p.*, f.amount, u.username, u.profile_image_url, CASE WHEN b.id IS NOT NULL THEN true ELSE false END AS is_bookmarked").
 		Scan(&userFunds).Error
 	if err != nil {
 		return nil, status.Error(codes.Internal, "internal server error")
@@ -256,6 +258,7 @@ func (s *Server) UserFunds(ctx context.Context, _ *emptypb.Empty) (*pb.UserFunds
 				DeadlineDate:    fund.DeadlineDate.Format(time.DateOnly),
 				Image:           fund.Image,
 				CreatedAt:       timestamppb.New(fund.DeadlineDate),
+				IsBookmarked:    fund.isBookmarked,
 			},
 			Amount: fund.Amount.String(),
 		})
@@ -411,6 +414,7 @@ func convertPostToPostPb(posts []*Post) []*pb.Post {
 			DeadlineDate:    post.DeadlineDate.Local().Format(time.DateOnly),
 			Image:           post.Image,
 			CreatedAt:       timestamppb.New(post.CreatedAt),
+			IsBookmarked:    false,
 		})
 	}
 

@@ -108,6 +108,7 @@ message Post {
     string deadline_date = 9;
     string image = 10;
     google.protobuf.Timestamp created_at = 11;
+    bool is_bookmarked = 12;
 }
 
 message PostDetail {
