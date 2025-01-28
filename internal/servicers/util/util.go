@@ -90,11 +90,22 @@ func GenerateFileName() string {
 }
 
 func GetUserIDFromCtx(ctx context.Context) int64 {
+	defer func() {
+		if r := recover(); r != nil {
+		}
+	}()
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return 0
 	}
 
-	userID, _ := strconv.ParseInt(md["user-id"][0], 10, 64)
-	return int64(userID)
+	if userIDStrs, exists := md["user-id"]; exists && len(userIDStrs) > 0 {
+		userID, err := strconv.ParseInt(userIDStrs[0], 10, 64)
+		if err == nil {
+			return userID
+		}
+	}
+
+	return 0
 }
