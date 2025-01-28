@@ -40,7 +40,7 @@ func SendEmail(to []string, subject, messageBody string) error {
 }
 
 func SendSignUpEmail(email, signUpToken, code string) {
-	link := fmt.Sprintf("http://localhost:3000/code-verification/%s/%s", signUpToken, code)
+	link := fmt.Sprintf("https://ideyar-app.ir/code-verification/%s/%s", signUpToken, code)
 	messageBody, err := LoadVerificationEmail(link)
 	if err != nil {
 		log.Println("Error creating email message:", err)
@@ -54,7 +54,7 @@ func SendSignUpEmail(email, signUpToken, code string) {
 }
 
 func SendForgetPasswordEmail(ctx context.Context, email, token string) {
-	link := fmt.Sprintf("http://localhost:3000/forget-password/%s", token)
+	link := fmt.Sprintf("https://ideyar-app.ir/forget-password/%s", token)
 	messageBody, err := LoadForgetPasswordEmail(link)
 	if err != nil {
 		log.Println("Error creating email message:", err)
@@ -68,7 +68,7 @@ func SendForgetPasswordEmail(ctx context.Context, email, token string) {
 }
 
 func SendChangeMailEmail(ctx context.Context, email, token string) {
-	link := fmt.Sprintf("http://localhost:3000/change-email/%s", token)
+	link := fmt.Sprintf("https://ideyar-app.ir/change-email/%s", token)
 	messageBody, err := LoadChangeMailEmail(link)
 	if err != nil {
 		log.Println("Error creating email message:", err)
