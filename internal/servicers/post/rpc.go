@@ -124,9 +124,17 @@ func (s *Server) SearchPost(ctx context.Context, req *pb.SearchPostRequest) (*pb
 		// FIXME: This code has possible sql injection
 		switch filter.GetSortBy() {
 		case pb.SearchPostRequest_Filters_CREATED_TIME:
-			query = query.Order("p.created_at DESC")
+			if filter.Ascending {
+				query = query.Order("p.created_at ASC")
+			} else {
+				query = query.Order("p.created_at DESC")
+			}
 		case pb.SearchPostRequest_Filters_DEADLINE:
-			query = query.Order("p.deadline_date ASC")
+			if filter.Ascending {
+				query = query.Order("p.deadline_date ASC")
+			} else {
+				query = query.Order("p.deadline_date DESC")
+			}
 		default:
 			query = query.Order(fmt.Sprintf("SIMILARITY(p.title, '%s') DESC", title))
 		}
